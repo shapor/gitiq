@@ -55,7 +55,9 @@ function addLogEntry(message, type = 'info') {
     entry.className = `log-entry ${type}`;
     entry.textContent = message;
     logSection.appendChild(entry);
-    setTimeout(() => entry.classList.add('visible'), 10);
+    // Force a reflow to ensure the 'visible' class transition works
+    entry.offsetHeight;
+    entry.classList.add('visible');
     logSection.scrollTop = logSection.scrollHeight;
 }
 
@@ -165,6 +167,8 @@ async function initialize() {
             loadModels()
         ]);
     }
+    // Add a test log entry to ensure the log section is working
+    addLogEntry('GitIQ initialized successfully', 'info');
 }
 
 initialize();

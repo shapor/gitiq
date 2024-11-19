@@ -17,8 +17,8 @@
   "models": {
     "Claude 3.5 Sonnet": { "llm_api": "claude", "name": "claude-3-5-sonnet-20240620", "nojson": true, "max_output_tokens": 8192, "cost": [0.003, 0.015] },
     "OpenAI o1-preview (via OpenRouter)": { "llm_api": "openrouter", "name": "openai/o1-preview", "max_output_tokens": 16000, "cost": [0.015, 0.06] },
-    "GPT-4o (with cache)": { "llm_api": "lmproxy", "name": "gpt-4o", "cost": [0.0025, 0.01], "max_output_tokens": 32000 },
-    "GPT-4o": { "llm_api": "openai", "name": "gpt-4o", "cost": [0.0025, 0.01], "max_output_tokens": 32000 },
+    "GPT-4o (with cache)": { "llm_api": "lmproxy", "name": "gpt-4o", "cost": [0.0025, 0.01], "max_output_tokens": 16384},
+    "GPT-4o": { "llm_api": "openai", "name": "gpt-4o", "cost": [0.0025, 0.01], "max_output_tokens": 16384 },
     "GPT-4o Mini (with cache)": { "llm_api": "lmproxy", "name": "gpt-4o-mini", "cost": [0.00015, 0.0006], "max_output_tokens": 8192 },
     "GPT-4 Turbo (with cache)": { "llm_api": "lmproxy", "name": "gpt-4-turbo", "cost": [0.01, 0.03], "max_output_tokens": 16000 },
     "GPT-4 Turbo": { "llm_api": "openai", "name": "gpt-4-turbo", "cost": [0.01, 0.03], "max_output_tokens": 16000 },

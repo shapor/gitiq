@@ -143,4 +143,7 @@ def chat_completion(
             llm_output = match.group(1).strip()
             logger.debug(f"Extracted from code block: {llm_output}")
 
+    if json_output and model.get('nojson', False):
+        llm_output = llm_output[llm_output.find('{'):]
+
     return llm_output

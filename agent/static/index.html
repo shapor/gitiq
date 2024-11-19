@@ -28,6 +28,19 @@
             background: #fee;
             color: #c00;
         }
+        .configure-button {
+            margin-left: 10px;
+            padding: 5px 10px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .configure-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
         .main-content {
             display: grid;
             grid-template-columns: 300px 1fr;
@@ -54,6 +67,26 @@
         }
         .file-item.untracked {
             color: #28a745;
+        }
+        .file-name {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .diff-preview {
+            display: none;
+            margin-top: 5px;
+            padding: 5px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            max-height: 100px;
+            overflow-y: auto;
+        }
+        .file-item.show-diff .diff-preview {
+            display: block;
         }
         .prompt-section {
             display: flex;
@@ -106,20 +139,39 @@
             border-left-color: #dc3545;
             color: #dc3545;
         }
+        .log-entry.success {
+            border-left-color: #28a745;
+            color: #28a745;
+        }
         .loading {
             display: none;
             margin: 10px 0;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 4px;
             color: #666;
         }
         .loading.visible {
             display: block;
+        }
+        .stage-timing {
+            font-size: 12px;
+            color: #666;
+            margin-left: 10px;
+        }
+        .stats-info {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
         }
     </style>
 </head>
 <body>
     <div class="header">
         <h1>GitIQ</h1>
-        <div id="repoStatus" class="repo-status">Checking repository status...</div>
+        <div id="repoStatus" class="repo-status">
+            Checking repository status...
+        </div>
     </div>
 
     <div class="main-content">
@@ -145,7 +197,8 @@
             <button id="submitBtn" class="submit-btn" disabled>Generate PR</button>
 
             <div id="loading" class="loading">
-                Generating changes... <span id="currentStage"></span>
+                <div>Generating changes... <span id="currentStage"></span></div>
+                <div class="stage-timing" id="stageTiming"></div>
             </div>
 
             <div id="logSection" class="log-section">
@@ -158,6 +211,7 @@
         // State management
         let selectedFiles = new Set();
         let isProcessing = false;
+        let stageStartTime;
 
         // DOM elements
         const repoStatus = document.getElementById('repoStatus');
@@ -167,39 +221,67 @@
         const submitBtn = document.getElementById('submitBtn');
         const loading = document.getElementById('loading');
         const currentStage = document.getElementById('currentStage');
+        const stageTiming = document.getElementById('stageTiming');
         const logSection = document.getElementById('logSection');
 
-        // Fetch repository status
         async function checkRepoStatus() {
             try {
                 const response = await fetch('/api/repo/status');
                 const status = await response.json();
 
                 if (!status.is_git_repo) {
-                    repoStatus.textContent = 'Error: Not a Git repository';
-                    repoStatus.classList.add('status-error');
-                    submitBtn.disabled = true;
+                    showError('Not a Git repository');
                     return false;
                 }
 
                 if (!status.has_credentials) {
-                    repoStatus.textContent = 'Error: Git credentials not configured';
+                    const message = status.needs_bot_setup ? 
+                        'Git bot needs configuration' : 
+                        'Git credentials not configured';
+                    
+                    repoStatus.innerHTML = `
+                        ${message}
+                        <button id="configureBtn" class="configure-button">
+                            Configure Bot
+                        </button>
+                    `;
+                    
+                    document.getElementById('configureBtn').onclick = configureBotUser;
                     repoStatus.classList.add('status-error');
                     submitBtn.disabled = true;
                     return false;
                 }
 
                 repoStatus.textContent = `Repository: ${status.current_branch}`;
+                repoStatus.classList.remove('status-error');
                 return true;
             } catch (error) {
-                repoStatus.textContent = `Error: ${error.message}`;
-                repoStatus.classList.add('status-error');
-                submitBtn.disabled = true;
+                showError(`Error: ${error.message}`);
                 return false;
             }
         }
 
-        // Fetch and display file structure
+        async function configureBotUser() {
+            try {
+                const configureBtn = document.getElementById('configureBtn');
+                configureBtn.disabled = true;
+                configureBtn.textContent = 'Configuring...';
+
+                const response = await fetch('/api/repo/configure', {
+                    method: 'POST'
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    await checkRepoStatus();
+                } else {
+                    showError(`Failed to configure bot: ${result.error}`);
+                }
+            } catch (error) {
+                showError(`Error configuring bot: ${error.message}`);
+            }
+        }
+
         async function loadFileStructure() {
             try {
                 const response = await fetch('/api/files');
@@ -224,10 +306,26 @@
                     });
 
                     const label = document.createElement('span');
+                    label.className = 'file-name';
                     label.textContent = file.path;
                     
-                    fileItem.appendChild(checkbox);
-                    fileItem.appendChild(label);
+                    if (file.diff) {
+                        const diffPreview = document.createElement('div');
+                        diffPreview.className = 'diff-preview';
+                        diffPreview.textContent = file.diff;
+                        
+                        label.onclick = () => {
+                            fileItem.classList.toggle('show-diff');
+                        };
+                        
+                        fileItem.appendChild(checkbox);
+                        fileItem.appendChild(label);
+                        fileItem.appendChild(diffPreview);
+                    } else {
+                        fileItem.appendChild(checkbox);
+                        fileItem.appendChild(label);
+                    }
+                    
                     fileList.appendChild(fileItem);
                 });
             } catch (error) {
@@ -235,14 +333,12 @@
             }
         }
 
-        // Update submit button state
         function updateSubmitButton() {
             submitBtn.disabled = isProcessing || 
                 selectedFiles.size === 0 || 
                 !promptInput.value.trim();
         }
 
-        // Load available models
         async function loadModels() {
             try {
                 const response = await fetch('/api/models');
@@ -256,16 +352,18 @@
             }
         }
 
-        // Add log entry
-        function addLogEntry(message, isError = false) {
+        function addLogEntry(message, type = 'info') {
             const entry = document.createElement('div');
-            entry.className = `log-entry${isError ? ' error' : ''}`;
+            entry.className = `log-entry ${type}`;
             entry.textContent = message;
             logSection.appendChild(entry);
             logSection.scrollTop = logSection.scrollHeight;
         }
 
-        // Handle PR generation
+        function formatStageTime(ms) {
+            return ms ? `(${(ms / 1000).toFixed(1)}s)` : '';
+        }
+
         async function generatePR() {
             if (isProcessing) return;
             
@@ -273,6 +371,8 @@
             submitBtn.disabled = true;
             loading.classList.add('visible');
             logSection.innerHTML = '';
+            currentStage.textContent = '';
+            stageTiming.textContent = '';
             
             const body = {
                 prompt: promptInput.value,
@@ -299,29 +399,58 @@
                         .filter(line => line.startsWith('data: '))
                         .map(line => JSON.parse(line.slice(6)));
 
-                    events.forEach(event => {
-                        if (event.stage === 'error') {
-                            addLogEntry(event.error, true);
-                        } else if (event.stage === 'complete') {
-                            addLogEntry('PR created successfully!');
-                        } else {
-                            currentStage.textContent = event.stage.replace(/_/g, ' ');
-                            if (event.llm_stats) {
-                                addLogEntry(`${event.stage}: ${event.llm_stats.total_tokens} tokens`);
-                            } else {
-                                addLogEntry(`${event.stage} completed`);
-                            }
+                    for (const event of events) {
+                        // Update stage timing if available
+                        if (event.timing) {
+                            stageTiming.textContent = formatStageTime(event.timing);
                         }
-                    });
+
+                        // Handle different event types
+                        switch (event.type) {
+                            case 'info':
+                                currentStage.textContent = event.message;
+                                addLogEntry(event.message);
+                                if (event.stats) {
+                                    addLogEntry(`Stats: ${JSON.stringify(event.stats)}`, 'stats');
+                                }
+                                break;
+
+                            case 'error':
+                                addLogEntry(event.message, 'error');
+                                break;
+
+                            case 'complete':
+                                const prUrl = event.pr_url;
+                                const message = prUrl.startsWith('local://') ?
+                                    `Local branch created: ${prUrl.replace('local://', '')}` :
+                                    `PR created: ${prUrl}`;
+                                addLogEntry(message, 'success');
+                                
+                                if (event.timings) {
+                                    addLogEntry('Stage Timings:', 'info');
+                                    Object.entries(event.timings).forEach(([stage, time]) => {
+                                        addLogEntry(`${stage}: ${formatStageTime(time)}`, 'info');
+                                    });
+                                }
+                                break;
+                        }
+                    }
                 }
             } catch (error) {
-                addLogEntry(`Error: ${error.message}`, true);
+                addLogEntry(`Error: ${error.message}`, 'error');
             } finally {
                 isProcessing = false;
                 loading.classList.remove('visible');
                 currentStage.textContent = '';
+                stageTiming.textContent = '';
                 updateSubmitButton();
             }
+        }
+
+        function showError(message) {
+            repoStatus.textContent = message;
+            repoStatus.classList.add('status-error');
+            submitBtn.disabled = true;
         }
 
         // Event listeners

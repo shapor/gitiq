@@ -4,11 +4,12 @@ app.py - Main Flask application for GitIQ
 import os
 import json
 import logging
-from flask import Flask, request, jsonify, Response
+from concurrent.futures import ThreadPoolExecutor
+from flask import Flask, request, jsonify, Response, send_from_directory
 from git import Repo, InvalidGitRepositoryError
 from git.exc import GitCommandError
 
-from llm_integration import load_llm_config, list_models, chat_completion
+from llm_integration import load_llm_config, list_models
 from stream_events import StreamProcessor
 
 def setup_logging():
@@ -29,34 +30,44 @@ app.debug = False
 # Load LLM configuration
 load_llm_config('config.json')
 
+def configure_git_bot(repo):
+    """Configure Git bot user for commits"""
+    try:
+        repo.config_writer().set_value("user", "name", "GitIQ-bot").release()
+        repo.config_writer().set_value("user", "email", "gitiq-bot@github.com").release()
+        return True
+    except Exception as e:
+        logger.error(f"Failed to configure git bot: {str(e)}")
+        return False
+
 def get_repo_status():
     """Get Git repository status information"""
     try:
         repo = Repo(os.getcwd())
+        bot_configured = (
+            repo.git.config("--get", "user.name") == "GitIQ-bot" and
+            repo.git.config("--get", "user.email") == "gitiq-bot@github.com"
+        )
         return {
             "is_git_repo": True,
-            "has_credentials": bool(repo.git.config("--get", "user.name", with_exceptions=False)),
-            "current_branch": repo.active_branch.name
+            "has_credentials": bot_configured,
+            "current_branch": repo.active_branch.name,
+            "needs_bot_setup": not bot_configured
         }
     except InvalidGitRepositoryError:
         return {
             "is_git_repo": False,
             "has_credentials": False,
-            "current_branch": None
+            "current_branch": None,
+            "needs_bot_setup": True
         }
 
 def get_file_structure(repo_path="."):
     """Get repository file structure with Git status"""
     try:
         repo = Repo(repo_path)
-        
-        # Get tracked files using git ls-files
         tracked_files = set(repo.git.ls_files().splitlines())
-        
-        # Get untracked files excluding ignored ones using git ls-files --others --exclude-standard
         untracked_files = set(repo.git.ls_files('--others', '--exclude-standard').splitlines())
-        
-        # Get modified files
         status = repo.index.diff(None)
         
         def get_git_status(file_path):
@@ -73,68 +84,75 @@ def get_file_structure(repo_path="."):
             return "unmodified"
         
         result = []
-        # Process all files (tracked + untracked)
         for file_path in tracked_files | untracked_files:
             try:
-                with open(file_path, 'r') as f:
-                    content = f.read()
-                    is_binary = '\0' in content
-                    lines = len(content.splitlines()) if not is_binary else 0
-                    tokens = len(content.split()) if not is_binary else 0
-            except:
-                is_binary = True
+                is_binary = False
                 lines = 0
                 tokens = 0
+                diff = None
 
-            result.append({
-                "path": file_path,
-                "size": os.path.getsize(file_path),
-                "mtime": int(os.path.getmtime(file_path)),
-                "is_binary": is_binary,
-                "lines": lines,
-                "tokens": tokens,
-                "git_status": get_git_status(file_path),
-                "diff": None  # TODO: Add diff implementation if needed
-            })
-        
+                try:
+                    with open(file_path, 'r', encoding='utf-8') as f:
+                        content = f.read()
+                        is_binary = '\0' in content
+                        if not is_binary:
+                            lines = len(content.splitlines())
+                            tokens = len(content.split())
+                except UnicodeDecodeError:
+                    is_binary = True
+
+                git_status = get_git_status(file_path)
+                if git_status == "modified":
+                    try:
+                        diff = repo.git.diff(file_path)
+                    except:
+                        diff = None
+
+                result.append({
+                    "path": file_path,
+                    "size": os.path.getsize(file_path),
+                    "mtime": int(os.path.getmtime(file_path)),
+                    "is_binary": is_binary,
+                    "lines": lines,
+                    "tokens": tokens,
+                    "git_status": git_status,
+                    "diff": diff
+                })
+            except Exception as e:
+                logger.error(f"Error processing file {file_path}: {str(e)}")
+
         return result
     except InvalidGitRepositoryError:
         return []
 
-def create_branch_name(description):
-    """Generate semantic branch name from description"""
-    return chat_completion(
-        messages=[
-            {"role": "system", "content": "Generate a short, kebab-case branch name from the description. Use only lowercase letters, numbers, and hyphens. Max length 50 chars. Format: GitIQ-{name}"},
-            {"role": "user", "content": description}
-        ],
-        model_name="gpt-3.5-turbo"
-    ).strip()
-
-def generate_file_changes(prompt, files, model_name):
-    """Generate file changes using LLM"""
+def cleanup_failed_operation(repo, original_branch, new_branch_name):
+    """Clean up after failed PR creation"""
     try:
-        files_content = {}
-        for file_path in files:
-            with open(file_path, 'r') as f:
-                files_content[file_path] = f.read()
-
-        return chat_completion(
-            messages=[
-                {"role": "system", "content": "Generate changes for the specified files based on the prompt. Return a JSON object with file paths as keys and new file contents as values."},
-                {"role": "user", "content": f"Files to modify:\n{json.dumps(files_content, indent=2)}\n\nRequested changes:\n{prompt}"}
-            ],
-            model_name=model_name,
-            json_output=True
-        )
+        if original_branch:
+            original_branch.checkout()
+        if new_branch_name in repo.heads:
+            repo.delete_head(new_branch_name, force=True)
     except Exception as e:
-        logger.error(f"Error generating changes: {str(e)}")
-        raise
+        logger.error(f"Failed to cleanup: {str(e)}")
+
+@app.route('/')
+def index():
+    return send_from_directory(app.static_folder, 'index.html')
 
 @app.route('/api/repo/status')
 def repo_status():
     """Get repository status endpoint"""
     return jsonify(get_repo_status())
+
+@app.route('/api/repo/configure', methods=['POST'])
+def configure_repo():
+    """Configure git bot user endpoint"""
+    try:
+        repo = Repo(os.getcwd())
+        success = configure_git_bot(repo)
+        return jsonify({"success": success})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
 
 @app.route('/api/files')
 def files():
@@ -156,65 +174,112 @@ def create_pr():
     model = data.get('model', 'gpt-4-turbo-preview')
 
     if not prompt or not selected_files:
-        return jsonify({"error": "Missing required fields"}), 400
+        return jsonify({"type": "error", "message": "Missing required fields"}), 400
 
     def generate():
         stream = StreamProcessor()
+        repo = None
+        original_branch = None
+        new_branch = None
+
         try:
             repo = Repo(os.getcwd())
+            original_branch = repo.active_branch
 
             # Create branch
             with stream.stage("create_branch"):
-                branch_name = create_branch_name(prompt)
-                current = repo.active_branch
+                branch_name = stream.chat(
+                    messages=[
+                        {"role": "system", "content": "Generate a short, kebab-case branch name from the description. Use only lowercase letters, numbers, and hyphens. Max length 50 chars. Format: GitIQ-{name}"},
+                        {"role": "user", "content": prompt}
+                    ],
+                    model_name="gpt-3.5-turbo"
+                ).strip()
                 new_branch = repo.create_head(branch_name)
                 new_branch.checkout()
-                yield stream.event("create_branch", {"branch": branch_name})
+                yield stream.event("info", {"message": f"Created branch: {branch_name}"})
 
-            # Generate changes
-            with stream.stage("generate_changes"):
-                changes = generate_file_changes(prompt, selected_files + context_files, model)
-                yield stream.event("generate_changes", {})
+            # Read files content
+            with stream.stage("read_files"):
+                files_content = {}
+                for file_path in selected_files + context_files:
+                    with open(file_path, 'r') as f:
+                        files_content[file_path] = f.read()
+                yield stream.event("info", {"message": f"Read {len(files_content)} files"})
+
+            # Generate changes and description in parallel
+            with ThreadPoolExecutor() as executor:
+                with stream.stage("generate_changes"):
+                    changes_future = executor.submit(lambda: stream.chat(
+                        messages=[
+                            {"role": "system", "content": "Generate changes for the specified files based on the prompt. Return a JSON object with file paths as keys and new file contents as values."},
+                            {"role": "user", "content": f"Files to modify:\n{json.dumps(files_content, indent=2)}\n\nRequested changes:\n{prompt}"}
+                        ],
+                        model_name=model,
+                        json_output=True
+                    ))
+
+                with stream.stage("generate_description"):
+                    description_future = executor.submit(lambda: stream.chat(
+                        messages=[
+                            {
+                                "role": "system",
+                                "content": """Generate a detailed PR description with:
+                                1. Original prompt
+                                2. Summary of changes and their impact
+                                3. Technical details of implementation
+                                4. List of modified files
+                                Use markdown formatting."""
+                            },
+                            {
+                                "role": "user",
+                                "content": f"Prompt: {prompt}\n\nFiles to be modified: {', '.join(selected_files)}"
+                            }
+                        ],
+                        model_name=model
+                    ))
+
+                changes = changes_future.result()
+                yield stream.event("info", {"message": "Changes generated"})
+
+                pr_description = description_future.result()
+                yield stream.event("info", {"message": "PR description generated"})
 
             # Apply changes
             with stream.stage("apply_changes"):
+                modified_files = []
                 for file_path, content in changes.items():
                     if file_path in selected_files:
                         with open(file_path, 'w') as f:
                             f.write(content)
-                yield stream.event("apply_changes", {"files": list(changes.keys())})
+                        modified_files.append(file_path)
+                yield stream.event("info", {"message": f"Modified {len(modified_files)} files"})
 
             # Commit changes
-            with stream.stage("commit"):
-                repo.index.add(list(changes.keys()))
-                commit_message = f"""Model: {model}
+            with stream.stage("commit_changes"):
+                repo.index.add(modified_files)
+                commit_message = f"""
+{pr_description}
 
-Prompt: {prompt}
-
-Files modified:
-{chr(10).join(f"- {f}" for f in changes.keys())}"""
+Model: {model}
+"""
                 repo.index.commit(commit_message)
-                yield stream.event("commit", {"hash": repo.head.commit.hexsha})
+                yield stream.event("info", {"message": "Changes committed"})
 
-            # Create PR (placeholder - actual GitHub/GitLab integration needed)
+            # Create PR (placeholder)
             with stream.stage("create_pr"):
-                pr_url = f"local://{branch_name}"  # Placeholder
-                yield stream.event("create_pr", {"url": pr_url})
-
-            # Cleanup
-            current.checkout()
-
-            yield stream.event("complete", {})
+                pr_url = f"local://{branch_name}"
+                yield stream.event("complete", {
+                    "pr_url": pr_url,
+                    "message": "PR created successfully",
+                    "branch": branch_name
+                })
 
         except Exception as e:
             logger.exception("Error processing request")
-            yield stream.event("error", {"error": str(e)})
-
-            # Attempt cleanup on error
-            try:
-                current.checkout()
-            except:
-                pass
+            if repo and original_branch:
+                cleanup_failed_operation(repo, original_branch, new_branch.name if new_branch else None)
+            yield stream.event("error", {"message": str(e)})
 
     return Response(generate(), mimetype='text/event-stream')
 

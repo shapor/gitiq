@@ -2,7 +2,7 @@ function FileList(containerId) {
     const container = document.getElementById(containerId);
     const selectedFiles = new Set();
     let filesData = [];
-    let currentSortKey = '';
+    let currentSortKey = 'path';
     let currentSortOrder = 'asc';
     let onSelectionChange = null;
 
@@ -60,17 +60,15 @@ function FileList(containerId) {
         const tbody = container.querySelector('tbody');
         tbody.innerHTML = '';
         let sortedFiles = filesData.slice();
-        if (currentSortKey) {
-            sortedFiles.sort((a, b) => {
-                let valA = a[currentSortKey];
-                let valB = b[currentSortKey];
-                if (typeof valA === 'string') valA = valA.toLowerCase();
-                if (typeof valB === 'string') valB = valB.toLowerCase();
-                if (valA < valB) return currentSortOrder === 'asc' ? -1 : 1;
-                if (valA > valB) return currentSortOrder === 'asc' ? 1 : -1;
-                return 0;
-            });
-        }
+        sortedFiles.sort((a, b) => {
+            let valA = a[currentSortKey];
+            let valB = b[currentSortKey];
+            if (typeof valA === 'string') valA = valA.toLowerCase();
+            if (typeof valB === 'string') valB = valB.toLowerCase();
+            if (valA < valB) return currentSortOrder === 'asc' ? -1 : 1;
+            if (valA > valB) return currentSortOrder === 'asc' ? 1 : -1;
+            return 0;
+        });
         sortedFiles.forEach(file => renderFileRow(file));
     }
 

@@ -233,7 +233,7 @@ Return ONLY a JSON object with the following structure, no additional next or co
 }
 Branch name must:
 - Start with GitIQ-
-- Use only lowercase letters, numbers, and hyphens
+- Use only lowercase letters, numbers, hyphens, and underscores
 - Be descriptive of the changes made
 - Maximum 50 characters
 - Use snake_case for multiple words (e.g., GitIQ-update_auth_system)
@@ -282,7 +282,7 @@ PR description should include:
                         raise ValueError("Invalid response format from LLM")
 
                     branch_name = branch_description_commit.get("branch_name", "")
-                    if not branch_name.startswith("GitIQ-") or len(branch_name) > 50 or not branch_name.replace("GitIQ-", "").replace("-", "_").isalnum():
+                    if not branch_name.startswith("GitIQ-") or len(branch_name) > 50 or not branch_name.replace("GitIQ-", "").replace("-", "_").replace("_", "").isalnum():
                         error_message = f"Invalid branch name generated: {branch_name}. Using fallback."
                         logger.error(error_message)
                         yield stream.event("error", {"message": error_message})

@@ -70,23 +70,14 @@ GitIQ is a new approach to AI pair programming that uses Git as the interface ra
 - Uses existing git config and credentials for commits/PRs
 - Configurable LLM API endpoints and keys
 
-### Technical Requirements
-- Python 3.8+
-- GitPython
-- Standard git installation
-- Modern web browser
-- Flask for backend server
-- Support for multiple LLM providers (OpenAI, Anthropic, etc.)
-
 ### Error States to Handle
 1. Not in git repository
 2. Dirty working directory **(post-MVP)**
-3. Missing git credentials
-4. Network connectivity issues
-5. LLM API failures
-6. File permission issues **(post-MVP)**
-7. Invalid file selections
-8. Invalid LLM configuration
+3. Network connectivity issues
+4. LLM API failures
+5. File permission issues **(post-MVP)**
+6. Invalid file selections
+7. Invalid LLM configuration
 
 ### Success Metrics
 - Time from prompt to PR **(post-MVP)**

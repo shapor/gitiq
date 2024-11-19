@@ -42,22 +42,14 @@ def get_repo_status():
     """Get Git repository status information"""
     try:
         repo = Repo(os.getcwd())
-        config_reader = repo.config_reader()
-        user_name = config_reader.get_value('user', 'name', default='')
-        user_email = config_reader.get_value('user', 'email', default='')
-
-        has_credentials = bool(user_name and user_email)
-
         return {
             "is_git_repo": True,
-            "current_branch": repo.active_branch.name,
-            "has_credentials": has_credentials
+            "current_branch": repo.active_branch.name
         }
     except InvalidGitRepositoryError:
         return {
             "is_git_repo": False,
-            "current_branch": None,
-            "has_credentials": False
+            "current_branch": None
         }
 
 def get_file_structure(repo_path="."):
@@ -253,31 +245,13 @@ Commit message should:
 
 [First line summary]
 
-[Blank line]
-
-[Detailed description]
-
-PR description should include:
-
-- The original prompt under a '## Prompt' section.
-- A '## Summary of Changes' section summarizing the changes and their impact.
-- Optional '### Technical Details' section with more details.
-- A '### Files Modified' section listing the files modified.
-- Include the 'Model' used at the end.
-
-See the following examples:
-
-Commit Message Example:
-
-[First line summary]
-
 Model: [Model Name]
 
 Prompt: [Original prompt]
 
 Description: [Detailed description]
 
-PR Description Example:
+PR description should include:
 
 ## Prompt
 [Original prompt]

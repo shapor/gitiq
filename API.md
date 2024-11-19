@@ -13,7 +13,6 @@ Returns repository Git configuration status.
 ```json
 {
     "is_git_repo": true,
-    "has_credentials": true,
     "current_branch": "main"
 }
 ```

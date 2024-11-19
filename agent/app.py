@@ -194,6 +194,10 @@ Return ONLY a JSON object with the following structure, no additional next or co
     "file_path.txt": "new_content based on 'Requested changes' user prompt",
     ...
   },
+  "new_files": {
+    "new_file_path.txt": "content of the new file",
+    ...
+  },
   "summary": "detailed description of changes made"
 }"""
                         },
@@ -217,6 +221,7 @@ Return ONLY a JSON object with the following structure, no additional next or co
                     raise ValueError("Invalid response format from LLM")
 
                 changes = changes_response["changes"]
+                new_files = changes_response.get("new_files", {})
                 summary = changes_response.get("summary", "No summary provided")
                 yield stream.event("info", {"message": "Changes generated"})
 
@@ -283,10 +288,19 @@ Branch name must:
                 modified_files = []
                 for file_path, content in changes.items():
                     if file_path in selected_files:  # Only modify selected files
-                        logger.info(f"modifed file: {file_path}")
+                        logger.info(f"modified file: {file_path}")
                         with open(file_path, 'w') as f:
                             f.write(content)
                         modified_files.append(file_path)
+                
+                # Create new files
+                for file_path, content in new_files.items():
+                    logger.info(f"created new file: {file_path}")
+                    with open(file_path, 'w') as f:
+                        f.write(content)
+                    modified_files.append(file_path)
+                    repo.index.add([file_path])  # Add new file to git
+
                 yield stream.event("info", {"message": f"Modified {len(modified_files)} files"})
 
             # Commit changes

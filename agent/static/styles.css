@@ -113,6 +113,11 @@ body {
     color: #6c757d;
     font-size: 12px;
 }
+.log-entry.pr-description {
+    border-left-color: #17a2b8;
+    color: #17a2b8;
+    white-space: pre-wrap;
+}
 .log-timestamp {
     color: #999;
     margin-right: 5px;

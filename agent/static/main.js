@@ -27,6 +27,13 @@ async function checkRepoStatus() {
             return false;
         }
 
+        if (!status.has_credentials) {
+            repoStatus.textContent = 'Error: Git user.name and/or user.email not set';
+            repoStatus.classList.add('status-error');
+            submitBtn.disabled = true;
+            return false;
+        }
+
         repoStatus.textContent = `Repository: ${status.current_branch}`;
         repoStatus.classList.remove('status-error');
         return true;
@@ -174,6 +181,11 @@ async function generatePR() {
                                         `Local branch created: ${prUrl.replace('local://', '')}` :
                                         `PR created: ${prUrl}`;
                                     addLogEntry(message, 'success');
+
+                                    if (event.pr_description) {
+                                        addLogEntry('PR Description:', 'info');
+                                        addLogEntry(event.pr_description, 'pr-description');
+                                    }
 
                                     if (event.timings) {
                                         addLogEntry('Stage Timings:', 'info');

@@ -42,14 +42,22 @@ def get_repo_status():
     """Get Git repository status information"""
     try:
         repo = Repo(os.getcwd())
+        config_reader = repo.config_reader()
+        user_name = config_reader.get_value('user', 'name', default='')
+        user_email = config_reader.get_value('user', 'email', default='')
+
+        has_credentials = bool(user_name and user_email)
+
         return {
             "is_git_repo": True,
-            "current_branch": repo.active_branch.name
+            "current_branch": repo.active_branch.name,
+            "has_credentials": has_credentials
         }
     except InvalidGitRepositoryError:
         return {
             "is_git_repo": False,
-            "current_branch": None
+            "current_branch": None,
+            "has_credentials": False
         }
 
 def get_file_structure(repo_path="."):
@@ -241,11 +249,55 @@ Commit message should:
 - First line summary less than 72 characters
 - Second line should be blank
 - Following lines can include detailed description
-- Should not include markdown headers or special formatting"""
+- The commit message should be formatted as per the following example:
+
+[First line summary]
+
+[Blank line]
+
+[Detailed description]
+
+PR description should include:
+
+- The original prompt under a '## Prompt' section.
+- A '## Summary of Changes' section summarizing the changes and their impact.
+- Optional '### Technical Details' section with more details.
+- A '### Files Modified' section listing the files modified.
+- Include the 'Model' used at the end.
+
+See the following examples:
+
+Commit Message Example:
+
+[First line summary]
+
+Model: [Model Name]
+
+Prompt: [Original prompt]
+
+Description: [Detailed description]
+
+PR Description Example:
+
+## Prompt
+[Original prompt]
+
+## Summary of Changes
+[Summary of changes]
+
+### Technical Details
+[Technical details of the changes]
+
+### Files Modified
+- [File 1]
+- [File 2]
+
+Model: [Model Name]
+"""
                             },
                             {
                                 "role": "user",
-                                "content": f"Prompt: {prompt}\n\nChanges summary: {summary}"
+                                "content": f"Prompt: {prompt}\n\nChanges summary: {summary}\n\nFiles modified:\n{list(changes.keys()) + list(new_files.keys())}"
                             }
                         ],
                         model_name=model,
@@ -267,7 +319,7 @@ Commit message should:
                 except Exception as e:
                     logger.error(f"Error generating branch name/description/commit message: {str(e)}")
                     branch_name = generate_branch_name(summary)
-                    pr_description = summary
+                    pr_description = f"## Changes\n{summary}"
                     commit_message = summary
 
                 yield stream.event("info", {"message": "Branch name, commit message, and PR description generated"})

@@ -49,7 +49,9 @@ function FileList(containerId) {
 
         // Add diff row if diff exists
         if (file.diff) {
-            tbody.appendChild(createDiffRow(file.diff));
+            const diffRow = createDiffRow(file.diff);
+            diffRow.style.display = 'none'; // Ensure the diff row is hidden initially
+            tbody.appendChild(diffRow);
         }
     }
 
@@ -78,7 +80,8 @@ function FileList(containerId) {
         if (file.diff) {
             const button = document.createElement('button');
             button.className = 'expand-button';
-            button.innerHTML = '▶';
+            button.innerHTML = '
+                \\u25b6';
             button.addEventListener('click', (e) => {
                 e.stopPropagation();
                 toggleDiff(file.path, row);
@@ -163,10 +166,12 @@ function FileList(containerId) {
             
             if (diffView.classList.contains('expanded')) {
                 diffView.classList.remove('expanded');
-                expandButton.innerHTML = '▶';
+                expandButton.innerHTML = '
+                    \\u25b6';
             } else {
                 diffView.classList.add('expanded');
-                expandButton.innerHTML = '▼';
+                expandButton.innerHTML = '
+                    \\u25bc';
             }
         }
     }

@@ -75,7 +75,7 @@ body {
 }
 .log-section {
     margin-top: 20px;
-    padding: 10px;
+    padding: 5px;
     background: #f8f9fa;
     border-radius: 4px;
     height: 200px;
@@ -84,16 +84,21 @@ body {
     transition: all 0.3s ease;
 }
 .log-entry {
-    margin: 5px 0;
-    padding: 5px;
+    margin: 2px 0;
+    padding: 3px;
     border-left: 3px solid #ddd;
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(5px);
     transition: opacity 0.3s ease, transform 0.3s ease;
+    font-size: 14px;
 }
 .log-entry.visible {
     opacity: 1;
     transform: translateY(0);
+}
+.log-entry.info {
+    border-left-color: #007bff;
+    color: #007bff;
 }
 .log-entry.error {
     border-left-color: #dc3545;
@@ -104,8 +109,13 @@ body {
     color: #28a745;
 }
 .log-entry.stats {
-    border-left-color: #0366d6;
-    color: #666;
+    border-left-color: #6c757d;
+    color: #6c757d;
+    font-size: 12px;
+}
+.log-timestamp {
+    color: #999;
+    margin-right: 5px;
     font-size: 12px;
 }
 .loading {

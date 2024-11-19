@@ -54,7 +54,8 @@ async function loadModels() {
 function addLogEntry(message, type = 'info') {
     const entry = document.createElement('div');
     entry.className = `log-entry ${type}`;
-    entry.textContent = message;
+    const timestamp = new Date().toLocaleTimeString();
+    entry.innerHTML = `<span class="log-timestamp">[${timestamp}]</span> ${message}`;
     logSection.appendChild(entry);
     // Force a reflow to ensure the 'visible' class transition works
     entry.offsetHeight;
@@ -145,14 +146,21 @@ async function generatePR() {
                         }
 
                         if (event.stage) {
-                            addLogEntry(`${event.stage}: ${event.message}`, 'info');
+                            addLogEntry(`${event.stage}: ${event.message}`, event.stage);
+                            if (event.llm_stats) {
+                                const stats = event.llm_stats;
+                                const statsMessage = `LLM Stats - Total Tokens: ${stats.total_tokens}, Prompt Tokens: ${stats.prompt_tokens}, Completion Tokens: ${stats.completion_tokens}, Cost: $${stats.cost.toFixed(4)}`;
+                                addLogEntry(statsMessage, 'stats');
+                            }
                         } else if (event.type) {
                             switch (event.type) {
                                 case 'info':
                                     currentStage.textContent = event.message;
-                                    addLogEntry(event.message);
-                                    if (event.stats) {
-                                        addLogEntry(`Stats: ${JSON.stringify(event.stats)}`, 'stats');
+                                    addLogEntry(event.message, 'info');
+                                    if (event.llm_stats) {
+                                        const stats = event.llm_stats;
+                                        const statsMessage = `LLM Stats - Total Tokens: ${stats.total_tokens}, Prompt Tokens: ${stats.prompt_tokens}, Completion Tokens: ${stats.completion_tokens}, Cost: $${stats.cost.toFixed(4)}`;
+                                        addLogEntry(statsMessage, 'stats');
                                     }
                                     break;
 
@@ -166,12 +174,18 @@ async function generatePR() {
                                         `Local branch created: ${prUrl.replace('local://', '')}` :
                                         `PR created: ${prUrl}`;
                                     addLogEntry(message, 'success');
-                                    
+
                                     if (event.timings) {
                                         addLogEntry('Stage Timings:', 'info');
                                         Object.entries(event.timings).forEach(([stage, time]) => {
                                             addLogEntry(`${stage}: ${formatStageTime(time)}`, 'info');
                                         });
+                                    }
+
+                                    if (event.llm_stats) {
+                                        const stats = event.llm_stats;
+                                        const statsMessage = `Total Tokens: ${stats.total_tokens}, Cost: $${stats.cost.toFixed(4)}`;
+                                        addLogEntry(statsMessage, 'stats');
                                     }
                                     break;
 

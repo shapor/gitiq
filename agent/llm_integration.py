@@ -150,10 +150,11 @@ def chat_completion(
             **kwargs
         )
         llm_output = response.content[0].text
-        # Calculate cost in USD, costs are in $ per 1K tokens
-        cost_total = (
-            response.usage.input_tokens * cost[0] + response.usage.output_tokens * cost[1]
-        ) / 1000
+        cost_total = calculate_cost(
+            response.usage.input_tokens,
+            response.usage.output_tokens,
+            model_name
+        )
         usage = {
             "prompt_tokens": response.usage.input_tokens,
             "completion_tokens": response.usage.output_tokens,

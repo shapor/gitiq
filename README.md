@@ -1,6 +1,6 @@
 # GitIQ
 
-GitIQ is a new approach to AI pair programming that uses Git as the interface rather than embedding in an IDE.
+GitIQ is an AI pair programming tool that uses Git as the interface rather than embedding in an IDE.
 
 ## Quick Start
 
@@ -12,7 +12,7 @@ OPENAI_API_KEY=xxxx python agent/app.py
 
 ## Configuration
 
-GitIQ uses a `config.json` file for various settings. Here's an overview of the configuration options:
+GitIQ uses a `config.json` file for various settings:
 
 ### Git Configuration
 
@@ -35,7 +35,7 @@ This sets the Git user name and email for commits made by GitIQ.
 }
 ```
 
-This section defines the various LLM API endpoints and their corresponding API keys. The API keys are specified as environment variable names.
+This section defines the LLM API endpoints and their corresponding API keys. API keys are specified as environment variable names.
 
 ### Model Configuration
 
@@ -57,14 +57,14 @@ This section defines the available models, specifying which API to use, the mode
 
 ## Overview
 
-While tools like GitHub Copilot and Cursor excel at in-IDE code generation, developers often want to make more substantial, multi-file changes that are better suited to Pull Requests. GitIQ allows developers to describe changes in natural language and get back complete PRs, using Git commits to maintain a clear history of AI-human collaboration.
+GitIQ allows developers to describe changes in natural language and receive complete Pull Requests. It uses Git commits to maintain a clear history of AI-human collaboration.
 
 ## Key Features
 
-- Uses Git as the primary interface instead of IDE integration
+- Uses Git as the primary interface
 - Preserves context and decision-making through commit messages
 - Handles multi-file changes as coherent units of work
-- Creates reviewable PRs rather than inline code suggestions
+- Creates reviewable PRs
 - Works with any editor/IDE since changes flow through Git
 - Supports multiple LLM providers and models through flexible configuration
 

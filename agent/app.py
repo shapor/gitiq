@@ -7,7 +7,6 @@ import logging
 from flask import Flask, request, jsonify, Response
 from git import Repo, InvalidGitRepositoryError
 from git.exc import GitCommandError
-import tempfile
 
 from llm_integration import load_llm_config, list_models, chat_completion
 from stream_events import StreamProcessor
@@ -52,7 +51,7 @@ def get_file_structure(repo_path="."):
         repo = Repo(repo_path)
         status = repo.index.diff(None)
         untracked = repo.untracked_files
-        
+
         def get_git_status(file_path):
             if file_path in untracked:
                 return "untracked"
@@ -74,7 +73,7 @@ def get_file_structure(repo_path="."):
                 file_path = os.path.join(root, file).replace("\\", "/")
                 if file_path.startswith("./"):
                     file_path = file_path[2:]
-                    
+
                 try:
                     with open(file_path, 'r') as f:
                         content = f.read()
@@ -140,6 +139,11 @@ def files():
     """Get file structure endpoint"""
     return jsonify(get_file_structure())
 
+@app.route('/api/models')
+def models():
+    """Get available LLM models"""
+    return jsonify(list_models())
+
 @app.route('/api/pr/create/stream', methods=['POST'])
 def create_pr():
     """Create PR with streaming updates endpoint"""
@@ -156,7 +160,7 @@ def create_pr():
         stream = StreamProcessor()
         try:
             repo = Repo(os.getcwd())
-            
+
             # Create branch
             with stream.stage("create_branch"):
                 branch_name = create_branch_name(prompt)
@@ -164,12 +168,12 @@ def create_pr():
                 new_branch = repo.create_head(branch_name)
                 new_branch.checkout()
                 yield stream.event("create_branch", {"branch": branch_name})
-            
+
             # Generate changes
             with stream.stage("generate_changes"):
                 changes = generate_file_changes(prompt, selected_files + context_files, model)
                 yield stream.event("generate_changes", {})
-            
+
             # Apply changes
             with stream.stage("apply_changes"):
                 for file_path, content in changes.items():
@@ -177,7 +181,7 @@ def create_pr():
                         with open(file_path, 'w') as f:
                             f.write(content)
                 yield stream.event("apply_changes", {"files": list(changes.keys())})
-            
+
             # Commit changes
             with stream.stage("commit"):
                 repo.index.add(list(changes.keys()))
@@ -189,21 +193,21 @@ Files modified:
 {chr(10).join(f"- {f}" for f in changes.keys())}"""
                 repo.index.commit(commit_message)
                 yield stream.event("commit", {"hash": repo.head.commit.hexsha})
-            
+
             # Create PR (placeholder - actual GitHub/GitLab integration needed)
             with stream.stage("create_pr"):
                 pr_url = f"local://{branch_name}"  # Placeholder
                 yield stream.event("create_pr", {"url": pr_url})
-            
+
             # Cleanup
             current.checkout()
-            
+
             yield stream.event("complete", {})
-            
+
         except Exception as e:
             logger.exception("Error processing request")
             yield stream.event("error", {"error": str(e)})
-            
+
             # Attempt cleanup on error
             try:
                 current.checkout()
@@ -213,4 +217,4 @@ Files modified:
     return Response(generate(), mimetype='text/event-stream')
 
 if __name__ == '__main__':
-    app.run(debug=False, host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
+    app.run(debug=False, host='0.0.0.0', port=int(os.environ.get('PORT', 5500)))

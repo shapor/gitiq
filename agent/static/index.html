@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitIQ - AI Pull Request Generator</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .header {
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+        .repo-status {
+            padding: 10px;
+            background: #f5f5f5;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .status-error {
+            background: #fee;
+            color: #c00;
+        }
+        .main-content {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 20px;
+        }
+        .file-list {
+            border-right: 1px solid #eee;
+            padding-right: 20px;
+            height: calc(100vh - 200px);
+            overflow-y: auto;
+        }
+        .file-item {
+            padding: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .file-item:hover {
+            background: #f5f5f5;
+        }
+        .file-item.modified {
+            color: #e6a700;
+        }
+        .file-item.untracked {
+            color: #28a745;
+        }
+        .prompt-section {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .prompt-input {
+            width: 100%;
+            height: 150px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: inherit;
+            resize: vertical;
+        }
+        .model-select {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 200px;
+        }
+        .submit-btn {
+            padding: 10px 20px;
+            background: #0366d6;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            width: fit-content;
+        }
+        .submit-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .log-section {
+            margin-top: 20px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+        }
+        .log-entry {
+            margin: 5px 0;
+            padding: 5px;
+            border-left: 3px solid #ddd;
+        }
+        .log-entry.error {
+            border-left-color: #dc3545;
+            color: #dc3545;
+        }
+        .loading {
+            display: none;
+            margin: 10px 0;
+            color: #666;
+        }
+        .loading.visible {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>GitIQ</h1>
+        <div id="repoStatus" class="repo-status">Checking repository status...</div>
+    </div>
+
+    <div class="main-content">
+        <div class="file-list" id="fileList">
+            <h3>Repository Files</h3>
+            <!-- Files will be populated here -->
+        </div>
+
+        <div class="prompt-section">
+            <div>
+                <label for="modelSelect">Model:</label>
+                <select id="modelSelect" class="model-select">
+                    <!-- Models will be populated here -->
+                </select>
+            </div>
+
+            <div>
+                <label for="promptInput">Describe Your Changes:</label>
+                <textarea id="promptInput" class="prompt-input" 
+                    placeholder="Describe the changes you want to make..."></textarea>
+            </div>
+
+            <button id="submitBtn" class="submit-btn" disabled>Generate PR</button>
+
+            <div id="loading" class="loading">
+                Generating changes... <span id="currentStage"></span>
+            </div>
+
+            <div id="logSection" class="log-section">
+                <!-- Logs will be populated here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // State management
+        let selectedFiles = new Set();
+        let isProcessing = false;
+
+        // DOM elements
+        const repoStatus = document.getElementById('repoStatus');
+        const fileList = document.getElementById('fileList');
+        const modelSelect = document.getElementById('modelSelect');
+        const promptInput = document.getElementById('promptInput');
+        const submitBtn = document.getElementById('submitBtn');
+        const loading = document.getElementById('loading');
+        const currentStage = document.getElementById('currentStage');
+        const logSection = document.getElementById('logSection');
+
+        // Fetch repository status
+        async function checkRepoStatus() {
+            try {
+                const response = await fetch('/api/repo/status');
+                const status = await response.json();
+
+                if (!status.is_git_repo) {
+                    repoStatus.textContent = 'Error: Not a Git repository';
+                    repoStatus.classList.add('status-error');
+                    submitBtn.disabled = true;
+                    return false;
+                }
+
+                if (!status.has_credentials) {
+                    repoStatus.textContent = 'Error: Git credentials not configured';
+                    repoStatus.classList.add('status-error');
+                    submitBtn.disabled = true;
+                    return false;
+                }
+
+                repoStatus.textContent = `Repository: ${status.current_branch}`;
+                return true;
+            } catch (error) {
+                repoStatus.textContent = `Error: ${error.message}`;
+                repoStatus.classList.add('status-error');
+                submitBtn.disabled = true;
+                return false;
+            }
+        }
+
+        // Fetch and display file structure
+        async function loadFileStructure() {
+            try {
+                const response = await fetch('/api/files');
+                const files = await response.json();
+
+                fileList.innerHTML = '<h3>Repository Files</h3>';
+                
+                files.forEach(file => {
+                    const fileItem = document.createElement('div');
+                    fileItem.className = `file-item ${file.git_status}`;
+                    
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.checked = selectedFiles.has(file.path);
+                    checkbox.addEventListener('change', () => {
+                        if (checkbox.checked) {
+                            selectedFiles.add(file.path);
+                        } else {
+                            selectedFiles.delete(file.path);
+                        }
+                        updateSubmitButton();
+                    });
+
+                    const label = document.createElement('span');
+                    label.textContent = file.path;
+                    
+                    fileItem.appendChild(checkbox);
+                    fileItem.appendChild(label);
+                    fileList.appendChild(fileItem);
+                });
+            } catch (error) {
+                fileList.innerHTML = `<div class="error">Error loading files: ${error.message}</div>`;
+            }
+        }
+
+        // Update submit button state
+        function updateSubmitButton() {
+            submitBtn.disabled = isProcessing || 
+                selectedFiles.size === 0 || 
+                !promptInput.value.trim();
+        }
+
+        // Load available models
+        async function loadModels() {
+            try {
+                const response = await fetch('/api/models');
+                const models = await response.json();
+                
+                modelSelect.innerHTML = models.map(model => 
+                    `<option value="${model}">${model}</option>`
+                ).join('');
+            } catch (error) {
+                modelSelect.innerHTML = '<option value="gpt-4-turbo-preview">GPT-4 Turbo</option>';
+            }
+        }
+
+        // Add log entry
+        function addLogEntry(message, isError = false) {
+            const entry = document.createElement('div');
+            entry.className = `log-entry${isError ? ' error' : ''}`;
+            entry.textContent = message;
+            logSection.appendChild(entry);
+            logSection.scrollTop = logSection.scrollHeight;
+        }
+
+        // Handle PR generation
+        async function generatePR() {
+            if (isProcessing) return;
+            
+            isProcessing = true;
+            submitBtn.disabled = true;
+            loading.classList.add('visible');
+            logSection.innerHTML = '';
+            
+            const body = {
+                prompt: promptInput.value,
+                selected_files: Array.from(selectedFiles),
+                model: modelSelect.value
+            };
+
+            try {
+                const response = await fetch('/api/pr/create/stream', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+
+                while (true) {
+                    const {value, done} = await reader.read();
+                    if (done) break;
+                    
+                    const events = decoder.decode(value)
+                        .split('\n\n')
+                        .filter(line => line.startsWith('data: '))
+                        .map(line => JSON.parse(line.slice(6)));
+
+                    events.forEach(event => {
+                        if (event.stage === 'error') {
+                            addLogEntry(event.error, true);
+                        } else if (event.stage === 'complete') {
+                            addLogEntry('PR created successfully!');
+                        } else {
+                            currentStage.textContent = event.stage.replace(/_/g, ' ');
+                            if (event.llm_stats) {
+                                addLogEntry(`${event.stage}: ${event.llm_stats.total_tokens} tokens`);
+                            } else {
+                                addLogEntry(`${event.stage} completed`);
+                            }
+                        }
+                    });
+                }
+            } catch (error) {
+                addLogEntry(`Error: ${error.message}`, true);
+            } finally {
+                isProcessing = false;
+                loading.classList.remove('visible');
+                currentStage.textContent = '';
+                updateSubmitButton();
+            }
+        }
+
+        // Event listeners
+        promptInput.addEventListener('input', updateSubmitButton);
+        submitBtn.addEventListener('click', generatePR);
+
+        // Initialize
+        async function initialize() {
+            const repoOk = await checkRepoStatus();
+            if (repoOk) {
+                await Promise.all([
+                    loadFileStructure(),
+                    loadModels()
+                ]);
+            }
+        }
+
+        initialize();
+    </script>
+</body>
+</html>

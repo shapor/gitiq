@@ -1,0 +1,37 @@
+{
+  "llm_apis": {
+    "openai": { "api_base": "https://api.openai.com/v1", "api_key": "OPENAI_API_KEY" },
+    "lmproxy": { "api_base": "https://api.lmproxy.org/v1", "api_key": "OPENAI_API_KEY" },
+    "groq": { "api_base": "https://api.groq.com/openai/v1", "api_key": "GROQ_API_KEY" },
+    "vertex": { "api_base": "https://us-central1-aiplatform.googleapis.com/v1beta1/projects/query-story/locations/us-central1/endpoints/openapi", "api_key": "VERTEX_ACCESS_TOKEN" },
+    "together": { "api_base": "https://api.together.xyz/v1", "api_key": "TOGETHER_API_KEY" },
+    "claude": { "api_type": "anthropic", "api_key": "ANTHROPIC_API_KEY" },
+    "hyperbolic": { "api_base": "https://api.hyperbolic.xyz/v1", "api_key": "HYPERBOLIC_API_KEY" },
+    "openrouter": { "api_base": "https://openrouter.ai/api/v1", "api_key": "OPENROUTER_API_KEY" }
+  },
+  "models": {
+    "Claude 3.5 Sonnet": { "llm_api": "claude", "name": "claude-3-5-sonnet-20240620", "nojson": true },
+    "OpenAI o1-preview (via OpenRouter)": { "llm_api": "openrouter", "name": "openai/o1-preview" },
+    "GPT-4o (with cache)": { "llm_api": "lmproxy", "name": "gpt-4o", "cost": [0.000005, 0.000015] },
+    "GPT-4o": { "llm_api": "openai", "name": "gpt-4o", "cost": [0.000005, 0.000015] },
+    "GPT-4o Mini (with cache)": { "llm_api": "lmproxy", "name": "gpt-4o-mini", "cost": [0.00000015, 0.0000006] },
+    "GPT-4 Turbo (with cache)": { "llm_api": "lmproxy", "name": "gpt-4-turbo", "cost": [0.00001, 0.00003] },
+    "GPT-4 Turbo": { "llm_api": "openai", "name": "gpt-4-turbo", "cost": [0.00001, 0.00003] },
+    "GPT-3.5 Turbo (with cache)": { "llm_api": "lmproxy", "name": "gpt-3.5-turbo-0125", "cost": [0.0000005, 0.0000015] },
+    "GPT-3.5 Turbo": { "llm_api": "openai", "name": "gpt-3.5-turbo", "cost": [0.0000005, 0.0000015] },
+    "Llama 3 70B (8K)": { "llm_api": "groq", "name": "llama3-70b-8192", "nojson": true },
+    "Reflection 70B (via Hyperbolic)": { "llm_api": "hyperbolic", "name": "mattshumer/Reflection-Llama-3.1-70B", "nojson": true },
+    "Llama 3.2 90B Vision Instruct (via OpenRouter)": { "llm_api": "openrouter", "name": "meta-llama/llama-3.2-90b-vision-instruct", "nojson": true },
+    "Llama 3.2 11B Vision Instruct (via OpenRouter)": { "llm_api": "openrouter", "name": "meta-llama/llama-3.2-11b-vision-instruct", "nojson": true },
+    "Llama 3.1 405B (via Together)": { "llm_api": "together", "name": "meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo", "nojson": true },
+    "Llama 3.1 70B (via Together)": { "llm_api": "together", "name": "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo", "nojson": true },
+    "Llama 3.1 405B (via Vertex)": { "llm_api": "vertex", "name": "meta/llama3-405b-instruct-maas", "nojson": false },
+    "Gemini 1.5 Pro (0827) (via OpenRouter)": { "llm_api": "openrouter", "name": "google/gemini-pro-1.5-exp" },
+    "Gemini 1.5 Flash Experimental (via OpenRouter)": { "llm_api": "openrouter", "name": "google/gemini-flash-1.5-exp", "nojson": true },
+    "Gemini 1.5 Flash (via OpenRouter)": { "llm_api": "openrouter", "name": "google/gemini-flash-1.5", "nojson": true },
+    "Qwen2 72b (via Together)": { "llm_api": "together", "name": "Qwen/Qwen2-72B-Instruct", "nojson": true },
+    "Qwen2.5 72b (via OpenRouter)": { "llm_api": "openrouter", "name": "qwen/qwen2.5-72b-instruct" },
+    "DBRX 132B Instruct (via OpenRouter)": { "llm_api": "openrouter", "name": "databricks/dbrx-instruct", "nojson": true }
+  }
+}
+

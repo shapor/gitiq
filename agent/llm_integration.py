@@ -102,11 +102,15 @@ def chat_completion(
             **kwargs
         )
         llm_output = response.choices[0].message.content.strip()
+        # Calculate cost in USD, costs are in $ per 1K tokens
+        cost_total = (
+            response.usage.prompt_tokens * cost[0] + response.usage.completion_tokens * cost[1]
+        ) / 1000
         usage = {
             "prompt_tokens": response.usage.prompt_tokens,
             "completion_tokens": response.usage.completion_tokens,
             "total_tokens": response.usage.total_tokens,
-            "cost": response.usage.prompt_tokens * cost[0] + response.usage.completion_tokens * cost[1]
+            "cost": cost_total
         }
 
     elif api_type == 'anthropic':
@@ -120,11 +124,15 @@ def chat_completion(
             **kwargs
         )
         llm_output = response.content[0].text
+        # Calculate cost in USD, costs are in $ per 1K tokens
+        cost_total = (
+            response.usage.input_tokens * cost[0] + response.usage.output_tokens * cost[1]
+        ) / 1000
         usage = {
             "prompt_tokens": response.usage.input_tokens,
             "completion_tokens": response.usage.output_tokens,
             "total_tokens": response.usage.input_tokens + response.usage.output_tokens,
-            "cost": (response.usage.input_tokens * cost[0] + response.usage.output_tokens * cost[1]) / 1000
+            "cost": cost_total
         }
     else:
         raise ValueError(f"Unsupported API type: {api_type}")

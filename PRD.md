@@ -9,6 +9,7 @@ GitIQ is a new approach to AI pair programming that uses Git as the interface ra
 - Handles multi-file changes as coherent units of work
 - Creates reviewable PRs rather than inline code suggestions
 - Works with any editor/IDE since changes flow through Git
+- Supports multiple LLM providers and models through flexible configuration
 
 ## Core Workflow
 1. Developer describes desired changes in natural language
@@ -22,7 +23,7 @@ GitIQ is a new approach to AI pair programming that uses Git as the interface ra
 
 ### Git Integration
 - Creates feature branch with AI-generated semantic name (format: `GitIQ-{name}`)
-- Sets git user.name and user.email for AI commits ("GitIQ-bot <gitiq-bot@github.com>")
+- Sets git user.name and user.email for AI commits (configurable in config.json)
 - Commits changes with:
   - Original prompt as commit message
   - AI-generated description of changes
@@ -39,14 +40,16 @@ GitIQ is a new approach to AI pair programming that uses Git as the interface ra
 - Large text input field for main prompt
 - Clear button to reset input **(post-MVP)**
 - Submit button to generate PR
+- Dropdown to select LLM model
 
 #### File Selection
 - Simple list view of repository files
 - Checkboxes next to each file
 - Search/filter capability for large repos **(post-MVP)**
 - Initially collapses node_modules and other common ignore patterns **(post-MVP)**
-- Shows git status (modified, untracked) next to files **(post-MVP)**
+- Shows git status (modified, untracked) next to files
 - Basic directory structure visible
+- Displays token count for selected files
 
 #### Context Addition
 - Basic ability to attach files for context
@@ -59,17 +62,21 @@ GitIQ is a new approach to AI pair programming that uses Git as the interface ra
 - Simple loading indicator
 - Cancel capability for long-running operations **(post-MVP)**
 - Basic error handling with user feedback
+- Streaming updates during PR generation process
 
 ### Security & Authentication
 - Runs only on localhost
 - No additional authentication needed (assumes local user is authorized)
 - Uses existing git config and credentials for commits/PRs
+- Configurable LLM API endpoints and keys
 
 ### Technical Requirements
 - Python 3.8+
 - GitPython
 - Standard git installation
 - Modern web browser
+- Flask for backend server
+- Support for multiple LLM providers (OpenAI, Anthropic, etc.)
 
 ### Error States to Handle
 1. Not in git repository
@@ -79,6 +86,7 @@ GitIQ is a new approach to AI pair programming that uses Git as the interface ra
 5. LLM API failures
 6. File permission issues **(post-MVP)**
 7. Invalid file selections
+8. Invalid LLM configuration
 
 ### Success Metrics
 - Time from prompt to PR **(post-MVP)**
@@ -86,6 +94,7 @@ GitIQ is a new approach to AI pair programming that uses Git as the interface ra
 - Number of iteration cycles needed **(post-MVP)**
 - File selection accuracy **(post-MVP)**
 - Basic error tracking
+- Token usage and cost tracking
 
 ### Example Commit Message Format
 ```
@@ -133,6 +142,12 @@ auth.py, along with updates to the user model to support token-based sessions.
 
 Model: gpt-4-turbo-preview
 ```
+
+### Configuration
+GitIQ uses a `config.json` file for various settings, including:
+- Git user configuration
+- LLM API endpoints and keys
+- Available models and their configurations
 
 Questions for immediate implementation:
 1. Should we limit the number of context files for MVP?

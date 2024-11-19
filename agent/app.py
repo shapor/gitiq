@@ -188,7 +188,7 @@ def create_pr():
                         {
                             "role": "system",
                             "content": """Generate changes for the specified files based on the prompt. 
-                            Return ONLY a JSON object with the following structure, no additional next or content before or after the JSON as follows::
+                            Return ONLY a JSON object with the following structure, no additional next or content before or after the JSON as follows:
                             {
                                 "changes": {
                                     "file_path": "new_content",
@@ -227,15 +227,15 @@ def create_pr():
                         messages=[
                             {
                                 "role": "system",
-                                "content": """Generate a JSON object with:
-                                {
-                                    "branch_name": "GitIQ-feature-name",
-                                    "pr_description": "Full PR description in markdown"
-                                }
-                                Branch name must:
-                                - Start with GitIQ-
-                                - Use only lowercase letters, numbers, and hyphens
-                                - Maximum 50 characters"""
+                                "content": """Return ONLY a JSON object with the following structure, no additional next or content before or after the JSON as follows:
+{
+  "branch_name": "GitIQ-feature-name",
+  "pr_description": "Full PR description in markdown"
+}
+Branch name must:
+- Start with GitIQ-
+- Use only lowercase letters, numbers, and hyphens
+- Maximum 50 characters"""
                             },
                             {
                                 "role": "user",
@@ -245,6 +245,17 @@ def create_pr():
                         model_name=model,
                         json_output=True
                     )
+
+                    if isinstance(branch_and_description, str):
+                        try:
+                            branch_and_description = json.loads(branch_and_description)
+                        except json.JSONDecodeError:
+                            logger.error(f"Failed to parse JSON response: {branch_and_description}")
+                            raise ValueError("Invalid JSON response from LLM")
+
+                    if not isinstance(branch_and_description, dict):
+                        logger.error(f"Bad branch/description response: {str(branch_and_description)}")
+                        raise ValueError("Invalid response format from LLM")
 
                     branch_name = branch_and_description.get("branch_name", "")
                     if not branch_name.startswith("GitIQ-") or len(branch_name) > 50:

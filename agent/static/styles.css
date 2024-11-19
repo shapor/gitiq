@@ -52,6 +52,11 @@ body {
     border-radius: 4px;
     width: 200px;
 }
+.submit-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
 .submit-btn {
     padding: 10px 20px;
     background: #0366d6;
@@ -64,6 +69,9 @@ body {
 .submit-btn:disabled {
     background: #ccc;
     cursor: not-allowed;
+}
+.submit-message {
+    color: #666;
 }
 .log-section {
     margin-top: 20px;

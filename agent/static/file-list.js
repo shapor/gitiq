@@ -89,7 +89,7 @@ function FileList(containerId) {
         row.appendChild(createFileNameCell(file));
         
         // Metadata cells
-        row.appendChild(createCell(new Date(file.mtime * 1000).toLocaleString()));
+        row.appendChild(createCell(getRelativeTime(file.mtime)));
         row.appendChild(createCell(`${file.size} bytes`));
         row.appendChild(createCell(file.tokens.toString()));
         
@@ -101,6 +101,28 @@ function FileList(containerId) {
             diffRow.style.display = 'none';
             tbody.appendChild(diffRow);
         }
+    }
+
+    function getRelativeTime(unixTimestamp) {
+        const now = Date.now() / 1000; // Convert to seconds
+        const diffSeconds = Math.floor(now - unixTimestamp);
+
+        const units = [
+            { name: 'year', duration: 365 * 24 * 60 * 60 },
+            { name: 'month', duration: 30 * 24 * 60 * 60 },
+            { name: 'day', duration: 24 * 60 * 60 },
+            { name: 'hour', duration: 60 * 60 },
+            { name: 'minute', duration: 60 },
+            { name: 'second', duration: 1 }
+        ];
+
+        for (let unit of units) {
+            const count = Math.floor(diffSeconds / unit.duration);
+            if (count >= 1) {
+                return `${count} ${unit.name}${count > 1 ? 's' : ''} ago`;
+            }
+        }
+        return 'just now';
     }
 
     function createCheckboxCell(file) {

@@ -188,7 +188,7 @@ def create_pr():
                         {
                             "role": "system",
                             "content": """Generate changes for the specified files based on the prompt. 
-                            Return ONLY a JSON object with the following structure, no additional next or content before or after the JSON as follows:
+                            Return ONLY a JSON object with the following structure, no additional next or content before or after the JSON as follows, making sure the output is VALID JSON escaping newlines as \\n, etc:
                             {
                                 "changes": {
                                     "file_path": "new_content",
@@ -227,7 +227,7 @@ def create_pr():
                         messages=[
                             {
                                 "role": "system",
-                                "content": """Return ONLY a JSON object with the following structure, no additional next or content before or after the JSON as follows:
+                                "content": """Return ONLY a JSON object with the following structure, no additional next or content before or after the JSON as follows, making sure the output is VALID JSON escaping newlines as \\n, etc:
 {
   "branch_name": "GitIQ-feature-name",
   "pr_description": "Full PR description in markdown"

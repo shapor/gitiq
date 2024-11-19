@@ -141,27 +141,23 @@ def chat_completion(
 
     elif api_type == 'anthropic':
         system_message, user_messages = _format_messages_for_claude(messages)
-        client = Anthropic(api_key=os.getenv(api_config['api_key']))
-        response = client.completions.create(
+        response = anthropic.Anthropic(api_key=os.getenv(api_config['api_key'])).messages.create(
             model=model['name'],
-            max_tokens_to_sample=max_output_tokens,
-            prompt=anthropic.HUMAN_PROMPT + system_message + "\n\n" + "\n\n".join([m['content'] for m in user_messages]) + anthropic.AI_PROMPT,
+            system=system_message,
+            messages=user_messages,
+            max_tokens=max_output_tokens,
             temperature=0.1,
             **kwargs
         )
-        llm_output = response.completion.strip()
-        # As Anthropic API does not return usage, we may not be able to calculate cost accurately
-        prompt_tokens = count_tokens(response.prompt)
-        completion_tokens = count_tokens(response.completion)
-        cost_total = calculate_cost(
-            prompt_tokens,
-            completion_tokens,
-            model_name
-        )
+        llm_output = response.content[0].text
+        # Calculate cost in USD, costs are in $ per 1K tokens
+        cost_total = (
+            response.usage.input_tokens * cost[0] + response.usage.output_tokens * cost[1]
+        ) / 1000
         usage = {
-            "prompt_tokens": prompt_tokens,
-            "completion_tokens": completion_tokens,
-            "total_tokens": prompt_tokens + completion_tokens,
+            "prompt_tokens": response.usage.input_tokens,
+            "completion_tokens": response.usage.output_tokens,
+            "total_tokens": response.usage.input_tokens + response.usage.output_tokens,
             "cost": cost_total
         }
     else:

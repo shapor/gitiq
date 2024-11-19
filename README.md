@@ -30,8 +30,7 @@ This sets the Git user name and email for commits made by GitIQ.
 ```json
 "llm_apis": {
   "openai": { "api_base": "https://api.openai.com/v1", "api_key": "OPENAI_API_KEY" },
-  "lmproxy": { "api_base": "https://api.lmproxy.org/v1", "api_key": "OPENAI_API_KEY" },
-  ...
+  "lmproxy": { "api_base": "https://api.lmproxy.org/v1", "api_key": "OPENAI_API_KEY" }
 }
 ```
 
@@ -42,8 +41,7 @@ This section defines the LLM API endpoints and their corresponding API keys. API
 ```json
 "models": {
   "Claude 3.5 Sonnet": { "llm_api": "claude", "name": "claude-3-5-sonnet-20240620", "nojson": true },
-  "OpenAI o1-preview (via OpenRouter)": { "llm_api": "openrouter", "name": "openai/o1-preview" },
-  ...
+  "OpenAI o1-preview (via OpenRouter)": { "llm_api": "openrouter", "name": "openai/o1-preview" }
 }
 ```
 

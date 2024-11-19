@@ -28,19 +28,6 @@
             background: #fee;
             color: #c00;
         }
-        .configure-button {
-            margin-left: 10px;
-            padding: 5px 10px;
-            background: #28a745;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        .configure-button:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-        }
         .main-content {
             display: grid;
             grid-template-columns: 300px 1fr;
@@ -143,6 +130,11 @@
             border-left-color: #28a745;
             color: #28a745;
         }
+        .log-entry.stats {
+            border-left-color: #0366d6;
+            color: #666;
+            font-size: 12px;
+        }
         .loading {
             display: none;
             margin: 10px 0;
@@ -158,11 +150,6 @@
             font-size: 12px;
             color: #666;
             margin-left: 10px;
-        }
-        .stats-info {
-            font-size: 12px;
-            color: #666;
-            margin-top: 5px;
         }
     </style>
 </head>
@@ -211,7 +198,6 @@
         // State management
         let selectedFiles = new Set();
         let isProcessing = false;
-        let stageStartTime;
 
         // DOM elements
         const repoStatus = document.getElementById('repoStatus');
@@ -230,23 +216,7 @@
                 const status = await response.json();
 
                 if (!status.is_git_repo) {
-                    showError('Not a Git repository');
-                    return false;
-                }
-
-                if (!status.has_credentials) {
-                    const message = status.needs_bot_setup ? 
-                        'Git bot needs configuration' : 
-                        'Git credentials not configured';
-                    
-                    repoStatus.innerHTML = `
-                        ${message}
-                        <button id="configureBtn" class="configure-button">
-                            Configure Bot
-                        </button>
-                    `;
-                    
-                    document.getElementById('configureBtn').onclick = configureBotUser;
+                    repoStatus.textContent = 'Error: Not a Git repository';
                     repoStatus.classList.add('status-error');
                     submitBtn.disabled = true;
                     return false;
@@ -256,29 +226,10 @@
                 repoStatus.classList.remove('status-error');
                 return true;
             } catch (error) {
-                showError(`Error: ${error.message}`);
+                repoStatus.textContent = `Error: ${error.message}`;
+                repoStatus.classList.add('status-error');
+                submitBtn.disabled = true;
                 return false;
-            }
-        }
-
-        async function configureBotUser() {
-            try {
-                const configureBtn = document.getElementById('configureBtn');
-                configureBtn.disabled = true;
-                configureBtn.textContent = 'Configuring...';
-
-                const response = await fetch('/api/repo/configure', {
-                    method: 'POST'
-                });
-                const result = await response.json();
-
-                if (result.success) {
-                    await checkRepoStatus();
-                } else {
-                    showError(`Failed to configure bot: ${result.error}`);
-                }
-            } catch (error) {
-                showError(`Error configuring bot: ${error.message}`);
             }
         }
 
@@ -445,12 +396,6 @@
                 stageTiming.textContent = '';
                 updateSubmitButton();
             }
-        }
-
-        function showError(message) {
-            repoStatus.textContent = message;
-            repoStatus.classList.add('status-error');
-            submitBtn.disabled = true;
         }
 
         // Event listeners

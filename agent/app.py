@@ -27,39 +27,27 @@ logger = setup_logging()
 app = Flask(__name__, static_url_path='', static_folder='static')
 app.debug = False
 
+# Load configuration
+with open('config.json') as f:
+    config = json.load(f)
+    GIT_AUTHOR = config.get('git', {}).get('author', 'GitIQ-bot <gitiq-bot@github.com>')
+    GIT_COMMITTER = config.get('git', {}).get('committer', 'GitIQ-bot <gitiq-bot@github.com>')
+
 # Load LLM configuration
 load_llm_config('config.json')
-
-def configure_git_bot(repo):
-    """Configure Git bot user for commits"""
-    try:
-        repo.config_writer().set_value("user", "name", "GitIQ-bot").release()
-        repo.config_writer().set_value("user", "email", "gitiq-bot@github.com").release()
-        return True
-    except Exception as e:
-        logger.error(f"Failed to configure git bot: {str(e)}")
-        return False
 
 def get_repo_status():
     """Get Git repository status information"""
     try:
         repo = Repo(os.getcwd())
-        bot_configured = (
-            repo.git.config("--get", "user.name") == "GitIQ-bot" and
-            repo.git.config("--get", "user.email") == "gitiq-bot@github.com"
-        )
         return {
             "is_git_repo": True,
-            "has_credentials": bot_configured,
-            "current_branch": repo.active_branch.name,
-            "needs_bot_setup": not bot_configured
+            "current_branch": repo.active_branch.name
         }
     except InvalidGitRepositoryError:
         return {
             "is_git_repo": False,
-            "has_credentials": False,
-            "current_branch": None,
-            "needs_bot_setup": True
+            "current_branch": None
         }
 
 def get_file_structure(repo_path="."):
@@ -143,16 +131,6 @@ def index():
 def repo_status():
     """Get repository status endpoint"""
     return jsonify(get_repo_status())
-
-@app.route('/api/repo/configure', methods=['POST'])
-def configure_repo():
-    """Configure git bot user endpoint"""
-    try:
-        repo = Repo(os.getcwd())
-        success = configure_git_bot(repo)
-        return jsonify({"success": success})
-    except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 500
 
 @app.route('/api/files')
 def files():
@@ -263,7 +241,11 @@ def create_pr():
 
 Model: {model}
 """
-                repo.index.commit(commit_message)
+                repo.index.commit(
+                    commit_message,
+                    author=GIT_AUTHOR,
+                    committer=GIT_COMMITTER
+                )
                 yield stream.event("info", {"message": "Changes committed"})
 
             # Create PR (placeholder)

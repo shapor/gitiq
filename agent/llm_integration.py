@@ -55,6 +55,28 @@ def _format_messages_for_claude(messages: List[Dict[str, str]]) -> tuple[str, Li
     user_messages = [m for m in messages if m["role"] != "system"]
     return system_message, user_messages
 
+def calculate_cost(prompt_tokens: int, completion_tokens: int, model_name: str) -> float:
+    """
+    Calculate the cost of an API call based on token usage and model pricing.
+
+    Args:
+        prompt_tokens: Number of tokens in the prompt
+        completion_tokens: Number of tokens in the completion
+        model_name: Name of the model used
+
+    Returns:
+        Total cost in USD
+    """
+    if _models is None:
+        raise RuntimeError("Call load_llm_config before using calculate_cost")
+    model = _models.get(model_name)
+    if not model:
+        logger.warning(f"Model {model_name} not found in configuration. Cannot calculate cost.")
+        return 0.0
+    cost = model.get('cost', [0, 0])
+    cost_total = (prompt_tokens * cost[0] + completion_tokens * cost[1]) / 1000
+    return cost_total
+
 def chat_completion(
     messages: List[Dict[str, str]],
     model_name: str,
@@ -82,13 +104,15 @@ def chat_completion(
 
     logger.debug(f"LLM Input:\n{messages}\nLLM Metadata: {kwargs}")
     
-    model = _models[model_name]
+    model = _models.get(model_name)
+    if not model:
+        logger.error(f"Model {model_name} not found in configuration")
+        raise ValueError(f"Model {model_name} not found.")
     max_output_tokens = model.get('max_output_tokens', 4000)
     if not model.get('nojson', False) and json_output:
         kwargs['response_format'] = {"type": "json_object"}
     api_config = _llm_apis[model['llm_api']]
     api_type = api_config.get('api_type', 'openai')
-    cost = model.get('cost', [0, 0])
 
     if api_type == 'openai':
         _ensure_openai_configured(api_config['api_base'], os.getenv(api_config['api_key']))
@@ -102,10 +126,12 @@ def chat_completion(
             **kwargs
         )
         llm_output = response.choices[0].message.content.strip()
-        # Calculate cost in USD, costs are in $ per 1K tokens
-        cost_total = (
-            response.usage.prompt_tokens * cost[0] + response.usage.completion_tokens * cost[1]
-        ) / 1000
+        # Calculate cost in USD
+        cost_total = calculate_cost(
+            response.usage.prompt_tokens,
+            response.usage.completion_tokens,
+            model_name
+        )
         usage = {
             "prompt_tokens": response.usage.prompt_tokens,
             "completion_tokens": response.usage.completion_tokens,
@@ -115,23 +141,27 @@ def chat_completion(
 
     elif api_type == 'anthropic':
         system_message, user_messages = _format_messages_for_claude(messages)
-        response = anthropic.Anthropic(api_key=os.getenv(api_config['api_key'])).messages.create(
+        client = Anthropic(api_key=os.getenv(api_config['api_key']))
+        response = client.completions.create(
             model=model['name'],
-            system=system_message,
-            messages=user_messages,
-            max_tokens=max_output_tokens,
+            max_tokens_to_sample=max_output_tokens,
+            prompt=anthropic.HUMAN_PROMPT + system_message + "\n\n" + "\n\n".join([m['content'] for m in user_messages]) + anthropic.AI_PROMPT,
             temperature=0.1,
             **kwargs
         )
-        llm_output = response.content[0].text
-        # Calculate cost in USD, costs are in $ per 1K tokens
-        cost_total = (
-            response.usage.input_tokens * cost[0] + response.usage.output_tokens * cost[1]
-        ) / 1000
+        llm_output = response.completion.strip()
+        # As Anthropic API does not return usage, we may not be able to calculate cost accurately
+        prompt_tokens = count_tokens(response.prompt)
+        completion_tokens = count_tokens(response.completion)
+        cost_total = calculate_cost(
+            prompt_tokens,
+            completion_tokens,
+            model_name
+        )
         usage = {
-            "prompt_tokens": response.usage.input_tokens,
-            "completion_tokens": response.usage.output_tokens,
-            "total_tokens": response.usage.input_tokens + response.usage.output_tokens,
+            "prompt_tokens": prompt_tokens,
+            "completion_tokens": completion_tokens,
+            "total_tokens": prompt_tokens + completion_tokens,
             "cost": cost_total
         }
     else:

@@ -16,7 +16,7 @@ import tiktoken
 
 # Configure logging
 logging.basicConfig(
-    format="%(asctime)s - %(name)s - level=%(levelname)s - %(message)s",
+    format="%(asctime)s - %(name%s - level=%%(levelname)s - %(message)s",
     level=logging.INFO
 )
 logger = logging.getLogger(__name__)
@@ -193,17 +193,36 @@ def chat_completion(
             return parsed_output
         except json.JSONDecodeError:
             logger.debug("Failed to parse JSON, attempting to extract JSON from code block")
-            # If extract_code_block was not set, we can try again
+            # Try to extract JSON from code block
+            json_content = None
             if not extract_code_block:
-                match = re.search(r'```(?:json)?\n([\s\S]*?)```', llm_output)
+                match = re.search(r'```(?:json)?\n([\s\S]*?)\n```', llm_output)
                 if match:
                     json_content = match.group(1)
                     try:
                         parsed_output = json.loads(json_content, strict=False)
                         return parsed_output
                     except json.JSONDecodeError:
-                        logger.error(f"Failed to parse JSON response from code block: {llm_output}")
-                        raise ValueError("Invalid JSON response from LLM")
+                        logger.error(f"Failed to parse JSON response from code block: {json_content}")
+                else:
+                    # Try to extract from any code block
+                    match = re.search(r'```[\s\S]*?```', llm_output)
+                    if match:
+                        json_content = match.group(0).strip('`').strip()
+                        try:
+                            parsed_output = json.loads(json_content, strict=False)
+                            return parsed_output
+                        except json.JSONDecodeError:
+                            logger.error(f"Failed to parse JSON response from code block: {json_content}")
+            # Try to extract JSON starting from first '{' character
+            idx = llm_output.find('{')
+            if idx != -1:
+                json_candidate = llm_output[idx:]
+                try:
+                    parsed_output = json.loads(json_candidate, strict=False)
+                    return parsed_output
+                except json.JSONDecodeError:
+                    logger.error(f"Failed to parse JSON response starting from '{{': {json_candidate}")
             logger.error(f"Failed to parse JSON response: {llm_output}")
             raise ValueError("Invalid JSON response from LLM")
     else:

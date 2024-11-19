@@ -76,11 +76,6 @@ async function generatePR() {
     
     isProcessing = true;
     submitBtn.disabled = true;
-    loading.classList.add('visible');
-    // Remove this line to keep existing log entries
-    // logSection.innerHTML = '';
-    currentStage.textContent = '';
-    stageTiming.textContent = '';
     
     const body = {
         prompt: promptInput.value,
@@ -88,6 +83,26 @@ async function generatePR() {
         model: modelSelect.value
     };
 
+    // Get the number of files
+    const numFiles = body.selected_files.length;
+
+    // Get the token count from the DOM
+    const tokenCountSpan = document.getElementById('tokenCount');
+    const tokenText = tokenCountSpan.textContent; // e.g., "(123 tokens selected)"
+    const matches = tokenText.match(/(\d+) tokens selected/);
+    const numTokens = matches ? parseInt(matches[1], 10) : 0;
+
+    // Get model name
+    const modelName = modelSelect.value;
+
+    // Add log entry
+    addLogEntry(`A new request was dispatched for ${numFiles} files (${numTokens} tokens) to model ${modelName}`, 'info');
+    
+    // Remove this line to keep existing log entries
+    // logSection.innerHTML = '';
+    currentStage.textContent = '';
+    stageTiming.textContent = '';
+    
     try {
         const response = await fetch('/api/pr/create/stream', {
             method: 'POST',
@@ -168,7 +183,6 @@ async function generatePR() {
         addLogEntry(`Error: ${error.message}`, 'error');
     } finally {
         isProcessing = false;
-        loading.classList.remove('visible');
         currentStage.textContent = '';
         stageTiming.textContent = '';
         updateSubmitButton();

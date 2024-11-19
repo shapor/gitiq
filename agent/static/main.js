@@ -9,6 +9,7 @@ const repoStatus = document.getElementById('repoStatus');
 const modelSelect = document.getElementById('modelSelect');
 const promptInput = document.getElementById('promptInput');
 const submitBtn = document.getElementById('submitBtn');
+const submitMessage = document.getElementById('submitMessage');
 const loading = document.getElementById('loading');
 const currentStage = document.getElementById('currentStage');
 const stageTiming = document.getElementById('stageTiming');
@@ -66,9 +67,15 @@ function formatStageTime(ms) {
 }
 
 function updateSubmitButton() {
-    submitBtn.disabled = isProcessing || 
-        fileList.getSelectedFiles().length === 0 || 
-        !promptInput.value.trim();
+    const selectedFiles = fileList.getSelectedFiles();
+    const promptText = promptInput.value.trim();
+    submitBtn.disabled = isProcessing || selectedFiles.length === 0 || !promptText;
+
+    if (submitBtn.disabled && selectedFiles.length === 0) {
+        submitMessage.textContent = 'Please select files below.';
+    } else {
+        submitMessage.textContent = '';
+    }
 }
 
 async function generatePR() {

@@ -77,7 +77,8 @@ async function generatePR() {
     isProcessing = true;
     submitBtn.disabled = true;
     loading.classList.add('visible');
-    logSection.innerHTML = '';
+    // Remove this line to keep existing log entries
+    // logSection.innerHTML = '';
     currentStage.textContent = '';
     stageTiming.textContent = '';
     
@@ -137,6 +138,11 @@ async function generatePR() {
                                 addLogEntry(`${stage}: ${formatStageTime(time)}`, 'info');
                             });
                         }
+                        break;
+
+                    // Add this case to handle 'stage' events
+                    case 'stage':
+                        addLogEntry(`${event.stage}: ${event.message}`, 'info');
                         break;
                 }
             }

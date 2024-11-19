@@ -316,9 +316,10 @@ Commit message should:
 
             # Commit changes
             with stream.stage("commit_changes"):
+                commit_message_with_model = f"{commit_message}\n\nModel: {model}"
                 repo.index.add(modified_files)
                 repo.index.commit(
-                    commit_message,
+                    commit_message_with_model,
                     author=GIT_BOT,
                     committer=GIT_BOT
                 )

@@ -1,7 +1,28 @@
 function FileList(containerId) {
     const container = document.getElementById(containerId);
     const selectedFiles = new Set();
+    let filesData = [];
+    let currentSortKey = '';
+    let currentSortOrder = 'asc';
     let onSelectionChange = null;
+
+    const selectAllCheckbox = document.getElementById('selectAll');
+    selectAllCheckbox.addEventListener('change', (e) => {
+        const checkboxes = container.querySelectorAll('tbody input[type="checkbox"]');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = selectAllCheckbox.checked;
+            const filePath = checkbox.dataset.filePath;
+            if (checkbox.checked) {
+                selectedFiles.add(filePath);
+            } else {
+                selectedFiles.delete(filePath);
+            }
+        });
+        updateTokenCount();
+        if (onSelectionChange) {
+            onSelectionChange(Array.from(selectedFiles));
+        }
+    });
 
     function setSelectionChangeHandler(handler) {
         onSelectionChange = handler;
@@ -27,15 +48,30 @@ function FileList(containerId) {
         try {
             const response = await fetch('/api/files');
             const files = await response.json();
-            
-            container.querySelector('tbody').innerHTML = '';
-            files.sort((a, b) => a.path.localeCompare(b.path));
-            
-            files.forEach(file => renderFileRow(file));
+            filesData = files;
+            renderFileTable();
         } catch (error) {
             container.querySelector('tbody').innerHTML = 
                 `<tr><td colspan="6" class="error">Error loading files: ${error.message}</td></tr>`;
         }
+    }
+
+    function renderFileTable() {
+        const tbody = container.querySelector('tbody');
+        tbody.innerHTML = '';
+        let sortedFiles = filesData.slice();
+        if (currentSortKey) {
+            sortedFiles.sort((a, b) => {
+                let valA = a[currentSortKey];
+                let valB = b[currentSortKey];
+                if (typeof valA === 'string') valA = valA.toLowerCase();
+                if (typeof valB === 'string') valB = valB.toLowerCase();
+                if (valA < valB) return currentSortOrder === 'asc' ? -1 : 1;
+                if (valA > valB) return currentSortOrder === 'asc' ? 1 : -1;
+                return 0;
+            });
+        }
+        sortedFiles.forEach(file => renderFileRow(file));
     }
 
     function renderFileRow(file) {
@@ -54,7 +90,7 @@ function FileList(containerId) {
         
         // Metadata cells
         row.appendChild(createCell(new Date(file.mtime * 1000).toLocaleString()));
-        row.appendChild(createCell(`${(file.size / 1024).toFixed(2)} KB`));
+        row.appendChild(createCell(`${file.size} bytes`));
         row.appendChild(createCell(file.tokens.toString()));
         
         tbody.appendChild(row);
@@ -72,6 +108,7 @@ function FileList(containerId) {
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
         checkbox.checked = selectedFiles.has(file.path);
+        checkbox.dataset.filePath = file.path;
         checkbox.addEventListener('change', (e) => {
             e.stopPropagation();
             if (checkbox.checked) {
@@ -83,6 +120,9 @@ function FileList(containerId) {
             if (onSelectionChange) {
                 onSelectionChange(Array.from(selectedFiles));
             }
+            const totalCheckboxes = container.querySelectorAll('tbody input[type="checkbox"]').length;
+            const checkedCheckboxes = container.querySelectorAll('tbody input[type="checkbox"]:checked').length;
+            selectAllCheckbox.checked = (totalCheckboxes === checkedCheckboxes);
         });
         cell.appendChild(checkbox);
         return cell;
@@ -93,7 +133,7 @@ function FileList(containerId) {
         if (file.diff) {
             const button = document.createElement('button');
             button.className = 'expand-button';
-            button.innerHTML = '▶';
+            button.innerHTML = '\u25b6';
             button.addEventListener('click', (e) => {
                 e.stopPropagation();
                 toggleDiff(file.path, row);
@@ -178,15 +218,29 @@ function FileList(containerId) {
             
             if (diffView.classList.contains('expanded')) {
                 diffView.classList.remove('expanded');
-                expandButton.innerHTML = '▶';
+                expandButton.innerHTML = '\u25b6';
                 diffRow.style.display = 'none';
             } else {
                 diffView.classList.add('expanded');
-                expandButton.innerHTML = '▼';
+                expandButton.innerHTML = '\u25bc';
                 diffRow.style.display = 'table-row';
             }
         }
     }
+
+    const headerCells = container.querySelectorAll('thead th.sortable');
+    headerCells.forEach(header => {
+        header.addEventListener('click', function() {
+            const sortKey = this.dataset.sortKey;
+            if (currentSortKey === sortKey) {
+                currentSortOrder = (currentSortOrder === 'asc') ? 'desc' : 'asc';
+            } else {
+                currentSortKey = sortKey;
+                currentSortOrder = 'asc';
+            }
+            renderFileTable();
+        });
+    });
 
     return {
         load: loadFileStructure,

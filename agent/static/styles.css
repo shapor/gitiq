@@ -211,6 +211,9 @@ body {
 .file-list th {
     background-color: #f2f2f2;
 }
+th.sortable {
+    cursor: pointer;
+}
 .token-count {
     font-size: 12px;
     color: #666;

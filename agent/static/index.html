@@ -297,7 +297,6 @@
         const currentStage = document.getElementById('currentStage');
         const stageTiming = document.getElementById('stageTiming');
         const logSection = document.getElementById('logSection');
-        const tokenCount = document.getElementById('tokenCount');
 
         async function checkRepoStatus() {
             try {
@@ -340,7 +339,7 @@
             entry.className = `log-entry ${type}`;
             entry.textContent = message;
             logSection.appendChild(entry);
-            setTimeout(() => entry.classList.add('visible'), 10); // Trigger animation
+            setTimeout(() => entry.classList.add('visible'), 10);
             logSection.scrollTop = logSection.scrollHeight;
         }
 
@@ -352,12 +351,6 @@
             submitBtn.disabled = isProcessing || 
                 fileList.getSelectedFiles().length === 0 || 
                 !promptInput.value.trim();
-        }
-
-        function updateTokenCount() {
-            const selectedFiles = fileList.getSelectedFiles();
-            const totalTokens = selectedFiles.reduce((sum, file) => sum + file.tokens, 0);
-            tokenCount.textContent = `(${totalTokens} tokens selected)`;
         }
 
         async function generatePR() {
@@ -438,17 +431,14 @@
                 currentStage.textContent = '';
                 stageTiming.textContent = '';
                 updateSubmitButton();
-                await fileList.load(); // Reload file list to show new changes
+                await fileList.load();
             }
         }
 
         // Event listeners
         promptInput.addEventListener('input', updateSubmitButton);
         submitBtn.addEventListener('click', generatePR);
-        fileList.setSelectionChangeHandler(() => {
-            updateSubmitButton();
-            updateTokenCount();
-        });
+        fileList.setSelectionChangeHandler(updateSubmitButton);
 
         // Initialize
         async function initialize() {
@@ -458,7 +448,6 @@
                     fileList.load(),
                     loadModels()
                 ]);
-                updateTokenCount();
             }
         }
 

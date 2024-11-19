@@ -11,6 +11,18 @@ function FileList(containerId) {
         return Array.from(selectedFiles);
     }
 
+    function updateTokenCount() {
+        const tokenSum = Array.from(container.querySelectorAll('tbody input[type="checkbox"]:checked'))
+            .reduce((sum, checkbox) => {
+                const row = checkbox.closest('tr');
+                const tokenCell = row.querySelector('td:last-child');
+                return sum + parseInt(tokenCell.textContent || 0);
+            }, 0);
+        
+        const tokenCounter = document.getElementById('tokenCount');
+        tokenCounter.textContent = `(${tokenSum} tokens selected)`;
+    }
+
     async function loadFileStructure() {
         try {
             const response = await fetch('/api/files');
@@ -50,7 +62,7 @@ function FileList(containerId) {
         // Add diff row if diff exists
         if (file.diff) {
             const diffRow = createDiffRow(file.diff);
-            diffRow.style.display = 'none'; // Ensure the diff row is hidden initially
+            diffRow.style.display = 'none';
             tbody.appendChild(diffRow);
         }
     }
@@ -67,6 +79,7 @@ function FileList(containerId) {
             } else {
                 selectedFiles.delete(file.path);
             }
+            updateTokenCount();
             if (onSelectionChange) {
                 onSelectionChange(Array.from(selectedFiles));
             }

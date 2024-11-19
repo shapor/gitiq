@@ -1,18 +1,74 @@
 # GitIQ
 
-GitIQ is an AI pair programming tool that uses Git as the interface rather than embedding in an IDE.
+GitIQ is an AI-powered pair programming tool that leverages Git as the primary interface, enabling seamless collaboration without the need for embedding in an IDE. With GitIQ, developers can describe changes in natural language and receive complete Pull Requests, enhancing productivity and simplifying the development workflow.
+
+## Table of Contents
+
+- [Features](#features)
+- [Quick Start](#quick-start)
+- [Installation](#installation)
+- [Configuration](#configuration)
+  - [Git Configuration](#git-configuration)
+  - [LLM API Configuration](#llm-api-configuration)
+  - [Model Configuration](#model-configuration)
+- [Usage](#usage)
+- [Documentation](#documentation)
+- [Contributing](#contributing)
+- [License](#license)
+
+## Features
+
+- **Git Integration**: Uses Git as the primary interface, allowing for seamless integration into existing workflows.
+- **AI-Powered Code Changes**: Transforms natural language descriptions into complete Pull Requests.
+- **Context Preservation**: Maintains a clear history of AI-human collaboration through Git commits.
+- **Multi-File Support**: Handles changes across multiple files as coherent units of work.
+- **Reviewable PRs**: Generates PRs that can be reviewed and merged, fitting into standard code review processes.
+- **Flexible Configuration**: Supports multiple LLM providers and models through easy-to-edit configuration files.
+- **IDE Agnostic**: Works with any editor or IDE since changes flow through Git.
 
 ## Quick Start
 
-To run the application:
+To get started with GitIQ, follow these steps:
 
+### Prerequisites
+
+- **Python 3.7 or higher**: Ensure Python is installed on your system.
+- **Git**: Git must be installed and configured.
+- **OpenAI API Key**: An API key for OpenAI or other supported LLM providers.
+
+### Installation
+
+Clone the repository:
+
+```bash
+git clone https://github.com/yourusername/gitiq.git
+cd gitiq
 ```
-OPENAI_API_KEY=xxxx python agent/app.py
+
+Install the required Python packages:
+
+```bash
+pip install -r requirements.txt
+```
+
+### Running the Application
+
+Set your API key and run the application:
+
+```bash
+export OPENAI_API_KEY=your_api_key_here
+python agent/app.py
+```
+
+Alternatively, you can run the application with the API key inline:
+
+```bash
+OPENAI_API_KEY=your_api_key_here python agent/app.py
 ```
 
 ## Configuration
 
-GitIQ uses a `config.json` file for various settings:
+GitIQ uses a `config.json` file for various settings. Below is an overview of the configuration options.
 
 ### Git Configuration
 
@@ -23,53 +79,59 @@ GitIQ uses a `config.json` file for various settings:
 }
 ```
 
-This sets the Git user name and email for commits made by GitIQ.
+Set the Git user name and email for commits made by GitIQ.
 
 ### LLM API Configuration
 
 ```json
 "llm_apis": {
-  "openai": { "api_base": "https://api.openai.com/v1", "api_key": "OPENAI_API_KEY" },
-  "lmproxy": { "api_base": "https://api.lmproxy.org/v1", "api_key": "OPENAI_API_KEY" }
+  "openai": {
+    "api_base": "https://api.openai.com/v1",
+    "api_key": "OPENAI_API_KEY"
+  },
+  "lmproxy": {
+    "api_base": "https://api.lmproxy.org/v1",
+    "api_key": "OPENAI_API_KEY"
+  }
 }
 ```
 
-This section defines the LLM API endpoints and their corresponding API keys. API keys are specified as environment variable names.
+Define the LLM API endpoints and their corresponding API keys. API keys are specified as environment variable names.
 
 ### Model Configuration
 
 ```json
 "models": {
-  "Claude 3.5 Sonnet": { "llm_api": "claude", "name": "claude-3-5-sonnet-20240620", "nojson": true },
-  "OpenAI o1-preview (via OpenRouter)": { "llm_api": "openrouter", "name": "openai/o1-preview" }
+  "Claude 3.5 Sonnet": {
+    "llm_api": "claude",
+    "name": "claude-3-5-sonnet-20240620",
+    "nojson": true
+  },
+  "OpenAI o1-preview (via OpenRouter)": {
+    "llm_api": "openrouter",
+    "name": "openai/o1-preview"
+  }
 }
 ```
 
-This section defines the available models, specifying which API to use, the model name, and any special flags like `nojson` for models that don't support JSON output.
+Define the available models, specifying which API to use, the model name, and any special flags like `nojson` for models that don't support JSON output.
+
+## Usage
+
+Once the application is running, you can start using GitIQ to assist with your coding tasks. Describe the changes you want to make in natural language, and GitIQ will generate the corresponding code changes and create a Pull Request for your review.
 
 ## Documentation
 
-- [Product Requirements Document](PRD.md)
-- [API Specification](API.md)
-- [Style Guide](Style_Guide.md)
+For more detailed information, please refer to the following documents:
 
-## Overview
-
-GitIQ allows developers to describe changes in natural language and receive complete Pull Requests. It uses Git commits to maintain a clear history of AI-human collaboration.
-
-## Key Features
-
-- Uses Git as the primary interface
-- Preserves context and decision-making through commit messages
-- Handles multi-file changes as coherent units of work
-- Creates reviewable PRs
-- Works with any editor/IDE since changes flow through Git
-- Supports multiple LLM providers and models through flexible configuration
+- [Product Requirements Document](PRD.md): Detailed requirements and specifications.
+- [API Specification](API.md): Information about the API endpoints and usage.
+- [Style Guide](Style_Guide.md): Guidelines for contributing to the project.
 
 ## Contributing
 
-Please read our [Style Guide](Style_Guide.md) before contributing to this project.
+We welcome contributions! Please read our [Style Guide](Style_Guide.md) before contributing to ensure consistency in the codebase. You can contribute by submitting Pull Requests, reporting issues, or suggesting new features.
 
 ## License
 
-[MIT License](LICENSE)
+This project is licensed under the [MIT License](LICENSE).

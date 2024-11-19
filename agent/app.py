@@ -5,11 +5,8 @@ import os
 import json
 import time
 import logging
-import re
-from concurrent.futures import ThreadPoolExecutor
 from flask import Flask, request, jsonify, Response, send_from_directory
 from git import Repo, InvalidGitRepositoryError, Actor
-from git.exc import GitCommandError
 
 from llm_integration import load_llm_config, list_models, count_tokens
 from stream_events import StreamProcessor
@@ -212,23 +209,6 @@ Return ONLY a JSON object with the following structure, no additional next or co
                     extract_code_block=True
                 )
 
-                if isinstance(changes_response, str):
-                    try:
-                        changes_response = json.loads(changes_response, strict=False)
-                    except json.JSONDecodeError:
-                        # Try extracting JSON from markdown code blocks
-                        match = re.search(r'```(?:json)?\n([\s\S]*?)```', changes_response)
-                        if match:
-                            json_content = match.group(1)
-                            try:
-                                changes_response = json.loads(json_content, strict=False)
-                            except json.JSONDecodeError:
-                                logger.error(f"Failed to parse JSON response from code block: {changes_response}")
-                                raise ValueError("Invalid JSON response from LLM")
-                        else:
-                            logger.error(f"Failed to parse JSON response: {changes_response}")
-                            raise ValueError("Invalid JSON response from LLM")
-
                 if not isinstance(changes_response, dict) or "changes" not in changes_response:
                     logger.error(f"Bad changes response: {str(changes_response)}")
                     raise ValueError("Invalid response format from LLM")
@@ -272,23 +252,6 @@ Commit message should:
                         json_output=True,
                         extract_code_block=True
                     )
-
-                    if isinstance(branch_description_commit, str):
-                        try:
-                            branch_description_commit = json.loads(branch_description_commit, strict=False)
-                        except json.JSONDecodeError:
-                            # Try extracting JSON from markdown code blocks
-                            match = re.search(r'```(?:json)?\n([\s\S]*?)```', branch_description_commit)
-                            if match:
-                                json_content = match.group(1)
-                                try:
-                                    branch_description_commit = json.loads(json_content, strict=False)
-                                except json.JSONDecodeError:
-                                    logger.error(f"Failed to parse JSON response from code block: {branch_description_commit}")
-                                    raise ValueError("Invalid JSON response from LLM")
-                            else:
-                                logger.error(f"Failed to parse JSON response: {branch_description_commit}")
-                                raise ValueError("Invalid JSON response from LLM")
 
                     if not isinstance(branch_description_commit, dict):
                         logger.error(f"Bad branch/description/commit response: {str(branch_description_commit)}")

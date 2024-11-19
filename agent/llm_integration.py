@@ -6,7 +6,7 @@ import re
 import json
 import logging
 import importlib
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Union
 from queue import Queue
 
 import openai
@@ -56,25 +56,26 @@ def _format_messages_for_claude(messages: List[Dict[str, str]]) -> tuple[str, Li
     return system_message, user_messages
 
 def chat_completion(
-    messages: List[Dict[str, str]], 
+    messages: List[Dict[str, str]],
     model_name: str,
     stats_queue: Optional[Queue] = None,
     extract_code_block: bool = False,
     json_output: bool = False,
     **kwargs
-) -> str:
+) -> Union[str, Dict]:
     """
     Create a chat completion using the specified model.
-    
+
     Args:
         messages: List of message dictionaries with 'role' and 'content'
         model_name: Name of the model to use from config
         stats_queue: Optional queue to collect usage statistics
         extract_code_block: Whether to extract content from code blocks
+        json_output: Whether to parse the output as JSON
         **kwargs: Additional arguments to pass to the API
-        
+
     Returns:
-        The completion text
+        The completion text or parsed JSON object
     """
     if _llm_apis is None or _models is None:
         raise RuntimeError("Call load_llm_config before using chat_completion")
@@ -133,26 +134,45 @@ def chat_completion(
     if stats_queue is not None:
         stats_queue.put(usage)
 
+    # Handle model-specific output manipulation
     if "Reflection" in model['name']:
         match = re.search(r'<output>(.*)</output>', llm_output, re.DOTALL | re.IGNORECASE)
         if match:
             llm_output = match.group(1)
             logger.debug(f"Extracted LLM Output: {llm_output}")
 
+    # If extract_code_block is set, extract code block
     if extract_code_block:
         match = re.search(r'```(?:[a-z]+)?\n([\s\S]*?)\n```', llm_output)
         if match:
             llm_output = match.group(1).strip()
             logger.debug(f"Extracted from code block: {llm_output}")
         else:
-            # Attempt to extract JSON even if code fences are not properly formatted
+            # Attempt to extract content even if code fences are not properly formatted
             llm_output = llm_output.strip('`').strip()
             logger.debug(f"Stripped code fences: {llm_output}")
 
-    if json_output and model.get('nojson', False):
-        llm_output = llm_output[llm_output.find('{'):]
-
-    return llm_output
+    if json_output:
+        try:
+            parsed_output = json.loads(llm_output, strict=False)
+            return parsed_output
+        except json.JSONDecodeError:
+            logger.debug("Failed to parse JSON, attempting to extract JSON from code block")
+            # If extract_code_block was not set, we can try again
+            if not extract_code_block:
+                match = re.search(r'```(?:json)?\n([\s\S]*?)```', llm_output)
+                if match:
+                    json_content = match.group(1)
+                    try:
+                        parsed_output = json.loads(json_content, strict=False)
+                        return parsed_output
+                    except json.JSONDecodeError:
+                        logger.error(f"Failed to parse JSON response from code block: {llm_output}")
+                        raise ValueError("Invalid JSON response from LLM")
+            logger.error(f"Failed to parse JSON response: {llm_output}")
+            raise ValueError("Invalid JSON response from LLM")
+    else:
+        return llm_output
 
 def count_tokens(text: str, model_name: str = "gpt-3.5-turbo") -> int:
     """

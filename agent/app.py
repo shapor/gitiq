@@ -3,6 +3,7 @@ app.py - Main Flask application for GitIQ
 """
 import os
 import json
+import time
 import logging
 from concurrent.futures import ThreadPoolExecutor
 from flask import Flask, request, jsonify, Response, send_from_directory
@@ -57,7 +58,7 @@ def get_file_structure(repo_path="."):
         tracked_files = set(repo.git.ls_files().splitlines())
         untracked_files = set(repo.git.ls_files('--others', '--exclude-standard').splitlines())
         status = repo.index.diff(None)
-        
+
         def get_git_status(file_path):
             if file_path in untracked_files:
                 return "untracked"
@@ -70,7 +71,7 @@ def get_file_structure(repo_path="."):
                     else:
                         return "modified"
             return "unmodified"
-        
+
         result = []
         for file_path in tracked_files | untracked_files:
             try:
@@ -112,6 +113,14 @@ def get_file_structure(repo_path="."):
         return result
     except InvalidGitRepositoryError:
         return []
+
+def generate_branch_name(summary):
+    """Generate a semantic branch name from the change summary"""
+    try:
+        return f"GitIQ-{int(time.time())}"
+    except Exception as e:
+        logger.error(f"Error generating branch name: {str(e)}")
+        return f"GitIQ-{int(time.time())}"
 
 def cleanup_failed_operation(repo, original_branch, new_branch_name):
     """Clean up after failed PR creation"""
@@ -161,23 +170,7 @@ def create_pr():
         new_branch = None
 
         try:
-            repo = Repo(os.getcwd())
-            original_branch = repo.active_branch
-
-            # Create branch
-            with stream.stage("create_branch"):
-                branch_name = stream.chat(
-                    messages=[
-                        {"role": "system", "content": "Generate a short, kebab-case branch name from the description. Use only lowercase letters, numbers, and hyphens. Max length 50 chars. Format: GitIQ-{name}"},
-                        {"role": "user", "content": prompt}
-                    ],
-                    model_name=model
-                ).strip()
-                new_branch = repo.create_head(branch_name)
-                new_branch.checkout()
-                yield stream.event("info", {"message": f"Created branch: {branch_name}"})
-
-            # Read files content
+            # Read files content first
             with stream.stage("read_files"):
                 files_content = {}
                 for file_path in selected_files + context_files:
@@ -185,49 +178,90 @@ def create_pr():
                         files_content[file_path] = f.read()
                 yield stream.event("info", {"message": f"Read {len(files_content)} files"})
 
-            # Generate changes and description in parallel
-            with ThreadPoolExecutor() as executor:
-                with stream.stage("generate_changes"):
-                    changes_future = executor.submit(lambda: stream.chat(
-                        messages=[
-                            {"role": "system", "content": "Generate changes for the specified files based on the prompt. Return a JSON object with file paths as keys and new file contents as values."},
-                            {"role": "user", "content": f"Files to modify:\n{json.dumps(files_content, indent=2)}\n\nRequested changes:\n{prompt}"}
-                        ],
-                        model_name=model,
-                        json_output=True
-                    ))
+            # Generate changes first, before creating any branches
+            with stream.stage("generate_changes"):
+                changes_response = stream.chat(
+                    messages=[
+                        {
+                            "role": "system",
+                            "content": """Generate changes for the specified files based on the prompt. 
+                            Return a JSON object with the following structure:
+                            {
+                                "changes": {
+                                    "file_path": "new_content",
+                                    ...
+                                },
+                                "summary": "detailed description of changes made"
+                            }"""
+                        },
+                        {
+                            "role": "user",
+                            "content": f"Files to modify:\n{json.dumps(files_content, indent=2)}\n\nRequested changes:\n{prompt}"
+                        }
+                    ],
+                    model_name=model,
+                    json_output=True
+                )
 
-                with stream.stage("generate_description"):
-                    description_future = executor.submit(lambda: stream.chat(
+                if not isinstance(changes_response, dict) or "changes" not in changes_response:
+                    raise ValueError("Invalid response format from LLM")
+
+                changes = changes_response["changes"]
+                summary = changes_response.get("summary", "No summary provided")
+                yield stream.event("info", {"message": "Changes generated"})
+
+            # Generate branch name and PR description based on the changes
+            with stream.stage("generate_metadata"):
+                try:
+                    branch_and_description = stream.chat(
                         messages=[
                             {
                                 "role": "system",
-                                "content": """Generate a detailed PR description with:
-                                1. Original prompt
-                                2. Summary of changes and their impact
-                                3. Technical details of implementation
-                                4. List of modified files
-                                Use markdown formatting."""
+                                "content": """Generate a JSON object with:
+                                {
+                                    "branch_name": "GitIQ-feature-name",
+                                    "pr_description": "Full PR description in markdown"
+                                }
+                                Branch name must:
+                                - Start with GitIQ-
+                                - Use only lowercase letters, numbers, and hyphens
+                                - Maximum 50 characters"""
                             },
                             {
                                 "role": "user",
-                                "content": f"Prompt: {prompt}\n\nFiles to be modified: {', '.join(selected_files)}"
+                                "content": f"Prompt: {prompt}\n\nChanges summary: {summary}"
                             }
                         ],
-                        model_name=model
-                    ))
+                        model_name=model,
+                        json_output=True
+                    )
 
-                changes = changes_future.result()
-                yield stream.event("info", {"message": "Changes generated"})
+                    branch_name = branch_and_description.get("branch_name", "")
+                    if not branch_name.startswith("GitIQ-") or len(branch_name) > 50:
+                        branch_name = generate_branch_name(summary)
 
-                pr_description = description_future.result()
-                yield stream.event("info", {"message": "PR description generated"})
+                    pr_description = branch_and_description.get("pr_description", summary)
+                except Exception as e:
+                    logger.error(f"Error generating branch name/description: {str(e)}")
+                    branch_name = generate_branch_name(summary)
+                    pr_description = summary
+
+                yield stream.event("info", {"message": "Branch name and PR description generated"})
+
+            # Now that we have the changes, create and checkout the branch
+            repo = Repo(os.getcwd())
+            original_branch = repo.active_branch
+
+            with stream.stage("create_branch"):
+                new_branch = repo.create_head(branch_name)
+                new_branch.checkout()
+                yield stream.event("info", {"message": f"Created branch: {branch_name}"})
 
             # Apply changes
             with stream.stage("apply_changes"):
                 modified_files = []
                 for file_path, content in changes.items():
-                    if file_path in selected_files:
+                    if file_path in selected_files:  # Only modify selected files
                         with open(file_path, 'w') as f:
                             f.write(content)
                         modified_files.append(file_path)

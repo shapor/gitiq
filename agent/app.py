@@ -234,7 +234,9 @@ Return ONLY a JSON object with the following structure, no additional next or co
 Branch name must:
 - Start with GitIQ-
 - Use only lowercase letters, numbers, and hyphens
+- Be descriptive of the changes made
 - Maximum 50 characters
+- Use snake_case for multiple words (e.g., GitIQ-update_auth_system)
 
 Commit message should:
 - Be in present tense
@@ -280,14 +282,21 @@ PR description should include:
                         raise ValueError("Invalid response format from LLM")
 
                     branch_name = branch_description_commit.get("branch_name", "")
-                    if not branch_name.startswith("GitIQ-") or len(branch_name) > 50:
+                    if not branch_name.startswith("GitIQ-") or len(branch_name) > 50 or not branch_name.replace("GitIQ-", "").replace("-", "_").isalnum():
+                        error_message = f"Invalid branch name generated: {branch_name}. Using fallback."
+                        logger.error(error_message)
+                        yield stream.event("error", {"message": error_message})
                         branch_name = generate_branch_name(summary)
+                    else:
+                        yield stream.event("info", {"message": f"Generated branch name: {branch_name}"})
 
                     pr_description = branch_description_commit.get("pr_description", summary)
                     commit_message = branch_description_commit.get("commit_message", pr_description.split('\n')[0])
 
                 except Exception as e:
-                    logger.error(f"Error generating branch name/description/commit message: {str(e)}")
+                    error_message = f"Error generating branch name/description/commit message: {str(e)}. Using fallback."
+                    logger.error(error_message)
+                    yield stream.event("error", {"message": error_message})
                     branch_name = generate_branch_name(summary)
                     pr_description = f"## Changes\n{summary}"
                     commit_message = summary

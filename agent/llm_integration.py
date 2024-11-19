@@ -92,7 +92,7 @@ def chat_completion(
         response = openai.ChatCompletion.create(
             model=model['name'],
             messages=messages,
-            max_tokens=4000,
+            max_tokens=8192,
             n=1,
             stop=None,
             temperature=0.1,
@@ -112,7 +112,7 @@ def chat_completion(
             model=model['name'],
             system=system_message,
             messages=user_messages,
-            max_tokens=4000,
+            max_tokens=8192,  # Required by Anthropic
             temperature=0.1,
             **kwargs
         )

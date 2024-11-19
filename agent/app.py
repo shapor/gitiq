@@ -185,7 +185,7 @@ def create_pr():
                         {
                             "role": "system",
                             "content": """Generate changes for the specified files based on the prompt. 
-                            Return a JSON object with the following structure:
+                            Return ONLY a JSON object with the following structure, no additional next or content before or after the JSON as follows:
                             {
                                 "changes": {
                                     "file_path": "new_content",
@@ -202,8 +202,15 @@ def create_pr():
                     model_name=model,
                     json_output=True
                 )
+                if isinstance(changes_response, str):
+                    try:
+                        changes_response = json.loads(changes_response)
+                    except json.JSONDecodeError:
+                        logger.error(f"Failed to parse JSON response: {changes_response}")
+                        raise ValueError("Invalid JSON response from LLM")
 
                 if not isinstance(changes_response, dict) or "changes" not in changes_response:
+                    logger.error(f"Bad changes response: {str(changes_response)}")
                     raise ValueError("Invalid response format from LLM")
 
                 changes = changes_response["changes"]

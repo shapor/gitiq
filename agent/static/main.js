@@ -10,10 +10,33 @@ const modelSelect = document.getElementById('modelSelect');
 const promptInput = document.getElementById('promptInput');
 const submitBtn = document.getElementById('submitBtn');
 const submitMessage = document.getElementById('submitMessage');
+const submitStatus = document.getElementById('submitStatus');
 const loading = document.getElementById('loading');
 const currentStage = document.getElementById('currentStage');
 const stageTiming = document.getElementById('stageTiming');
 const logSection = document.getElementById('logSection');
+
+function setStatusSpinner() {
+    submitStatus.innerHTML = '<span class="spinner"></span>';
+    submitStatus.classList.add('visible');
+}
+
+function setStatusSuccess() {
+    submitStatus.innerHTML = '<span class="success">&#10003;</span>';
+    submitStatus.classList.add('visible');
+}
+
+function setStatusError() {
+    submitStatus.innerHTML = '<span class="error">&#10007;</span>';
+    submitStatus.classList.add('visible');
+}
+
+function clearStatus() {
+    submitStatus.classList.remove('visible');
+    setTimeout(() => {
+        submitStatus.innerHTML = '';
+    }, 300); // Match the CSS transition duration
+}
 
 async function checkRepoStatus() {
     try {
@@ -84,6 +107,7 @@ async function generatePR() {
     
     isProcessing = true;
     submitBtn.disabled = true;
+    setStatusSpinner();
     
     const body = {
         prompt: promptInput.value,
@@ -166,6 +190,7 @@ async function generatePR() {
 
                                 case 'error':
                                     addLogEntry(event.message, 'error');
+                                    setStatusError();
                                     break;
 
                                 case 'complete':
@@ -192,6 +217,7 @@ async function generatePR() {
                                         const statsMessage = `Total Tokens: ${stats.total_tokens}, Cost: $${stats.cost.toFixed(4)}`;
                                         addLogEntry(statsMessage, 'stats');
                                     }
+                                    setStatusSuccess();
                                     break;
 
                                 default:
@@ -211,6 +237,7 @@ async function generatePR() {
         }
     } catch (error) {
         addLogEntry(`Error: ${error.message}`, 'error');
+        setStatusError();
     } finally {
         isProcessing = false;
         currentStage.textContent = '';
@@ -221,9 +248,17 @@ async function generatePR() {
 }
 
 // Event listeners
-promptInput.addEventListener('input', updateSubmitButton);
+promptInput.addEventListener('input', function() {
+    clearStatus();
+    updateSubmitButton();
+});
+
+fileList.setSelectionChangeHandler(function() {
+    clearStatus();
+    updateSubmitButton();
+});
+
 submitBtn.addEventListener('click', generatePR);
-fileList.setSelectionChangeHandler(updateSubmitButton);
 
 // Initialize
 async function initialize() {

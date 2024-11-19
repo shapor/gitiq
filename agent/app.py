@@ -245,8 +245,6 @@ Commit message should:
 
 [First line summary]
 
-Model: [Model Name]
-
 Prompt: [Original prompt]
 
 Description: [Detailed description]
@@ -265,8 +263,6 @@ PR description should include:
 ### Files Modified
 - [File 1]
 - [File 2]
-
-Model: [Model Name]
 """
                             },
                             {

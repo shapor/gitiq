@@ -7,22 +7,32 @@ function FileList(containerId) {
     let onSelectionChange = null;
 
     const selectAllCheckbox = document.getElementById('selectAll');
-    selectAllCheckbox.addEventListener('change', (e) => {
+    selectAllCheckbox.addEventListener('change', handleSelectAll);
+
+    function handleSelectAll() {
         const checkboxes = container.querySelectorAll('tbody input[type="checkbox"]');
         checkboxes.forEach(checkbox => {
             checkbox.checked = selectAllCheckbox.checked;
-            const filePath = checkbox.dataset.filePath;
-            if (checkbox.checked) {
-                selectedFiles.add(filePath);
-            } else {
-                selectedFiles.delete(filePath);
-            }
+            updateSelectedFiles(checkbox);
         });
         updateTokenCount();
+        notifySelectionChange();
+    }
+
+    function updateSelectedFiles(checkbox) {
+        const filePath = checkbox.dataset.filePath;
+        if (checkbox.checked) {
+            selectedFiles.add(filePath);
+        } else {
+            selectedFiles.delete(filePath);
+        }
+    }
+
+    function notifySelectionChange() {
         if (onSelectionChange) {
             onSelectionChange(Array.from(selectedFiles));
         }
-    });
+    }
 
     function setSelectionChangeHandler(handler) {
         onSelectionChange = handler;
@@ -47,8 +57,7 @@ function FileList(containerId) {
     async function loadFileStructure() {
         try {
             const response = await fetch('/api/files');
-            const files = await response.json();
-            filesData = files;
+            filesData = await response.json();
             renderFileTable();
         } catch (error) {
             container.querySelector('tbody').innerHTML = 
@@ -59,8 +68,12 @@ function FileList(containerId) {
     function renderFileTable() {
         const tbody = container.querySelector('tbody');
         tbody.innerHTML = '';
-        let sortedFiles = filesData.slice();
-        sortedFiles.sort((a, b) => {
+        const sortedFiles = sortFiles(filesData);
+        sortedFiles.forEach(file => renderFileRow(file, tbody));
+    }
+
+    function sortFiles(files) {
+        return files.slice().sort((a, b) => {
             let valA = a[currentSortKey];
             let valB = b[currentSortKey];
             if (typeof valA === 'string') valA = valA.toLowerCase();
@@ -69,31 +82,21 @@ function FileList(containerId) {
             if (valA > valB) return currentSortOrder === 'asc' ? 1 : -1;
             return 0;
         });
-        sortedFiles.forEach(file => renderFileRow(file));
     }
 
-    function renderFileRow(file) {
-        const tbody = container.querySelector('tbody');
+    function renderFileRow(file, tbody) {
         const row = document.createElement('tr');
         row.className = 'file-row';
         
-        // Checkbox cell
         row.appendChild(createCheckboxCell(file));
-        
-        // Expand button cell
         row.appendChild(createExpandButtonCell(file, row));
-        
-        // File name and status
         row.appendChild(createFileNameCell(file));
-        
-        // Metadata cells
         row.appendChild(createCell(getRelativeTime(file.mtime)));
         row.appendChild(createCell(`${file.size} bytes`));
         row.appendChild(createCell(file.tokens.toString()));
         
         tbody.appendChild(row);
 
-        // Add diff row if diff exists
         if (file.diff) {
             const diffRow = createDiffRow(file.diff);
             diffRow.style.display = 'none';
@@ -102,7 +105,7 @@ function FileList(containerId) {
     }
 
     function getRelativeTime(unixTimestamp) {
-        const now = Date.now() / 1000; // Convert to seconds
+        const now = Date.now() / 1000;
         const diffSeconds = Math.floor(now - unixTimestamp);
 
         const units = [
@@ -129,23 +132,23 @@ function FileList(containerId) {
         checkbox.type = 'checkbox';
         checkbox.checked = selectedFiles.has(file.path);
         checkbox.dataset.filePath = file.path;
-        checkbox.addEventListener('change', (e) => {
-            e.stopPropagation();
-            if (checkbox.checked) {
-                selectedFiles.add(file.path);
-            } else {
-                selectedFiles.delete(file.path);
-            }
-            updateTokenCount();
-            if (onSelectionChange) {
-                onSelectionChange(Array.from(selectedFiles));
-            }
-            const totalCheckboxes = container.querySelectorAll('tbody input[type="checkbox"]').length;
-            const checkedCheckboxes = container.querySelectorAll('tbody input[type="checkbox"]:checked').length;
-            selectAllCheckbox.checked = (totalCheckboxes === checkedCheckboxes);
-        });
+        checkbox.addEventListener('change', handleCheckboxChange);
         cell.appendChild(checkbox);
         return cell;
+    }
+
+    function handleCheckboxChange(e) {
+        e.stopPropagation();
+        updateSelectedFiles(e.target);
+        updateTokenCount();
+        notifySelectionChange();
+        updateSelectAllCheckbox();
+    }
+
+    function updateSelectAllCheckbox() {
+        const totalCheckboxes = container.querySelectorAll('tbody input[type="checkbox"]').length;
+        const checkedCheckboxes = container.querySelectorAll('tbody input[type="checkbox"]:checked').length;
+        selectAllCheckbox.checked = (totalCheckboxes === checkedCheckboxes);
     }
 
     function createExpandButtonCell(file, row) {
@@ -154,10 +157,7 @@ function FileList(containerId) {
             const button = document.createElement('button');
             button.className = 'expand-button';
             button.innerHTML = '\u25b6';
-            button.addEventListener('click', (e) => {
-                e.stopPropagation();
-                toggleDiff(file.path, row);
-            });
+            button.addEventListener('click', () => toggleDiff(file.path, row));
             cell.appendChild(button);
         }
         return cell;
@@ -250,8 +250,8 @@ function FileList(containerId) {
 
     const headerCells = container.querySelectorAll('thead th.sortable');
     headerCells.forEach(header => {
-        header.addEventListener('click', function() {
-            const sortKey = this.dataset.sortKey;
+        header.addEventListener('click', () => {
+            const sortKey = header.dataset.sortKey;
             if (currentSortKey === sortKey) {
                 currentSortOrder = (currentSortOrder === 'asc') ? 'desc' : 'asc';
             } else {

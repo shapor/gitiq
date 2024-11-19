@@ -80,8 +80,7 @@ function addLogEntry(message, type = 'info') {
     const timestamp = new Date().toLocaleTimeString();
     entry.innerHTML = `<span class="log-timestamp">[${timestamp}]</span> ${message}`;
     logSection.appendChild(entry);
-    // Force a reflow to ensure the 'visible' class transition works
-    entry.offsetHeight;
+    entry.offsetHeight; // Force reflow
     entry.classList.add('visible');
     logSection.scrollTop = logSection.scrollHeight;
 }
@@ -95,13 +94,9 @@ function updateSubmitButton() {
     const promptText = promptInput.value.trim();
     submitBtn.disabled = isProcessing || selectedFiles.length === 0 || !promptText;
 
-    if (submitBtn.disabled && selectedFiles.length === 0) {
-        submitMessage.textContent = 'Please select files below.';
-    } else {
-        submitMessage.textContent = '';
-    }
+    submitMessage.textContent = submitBtn.disabled && selectedFiles.length === 0 ? 
+        'Please select files below.' : '';
     
-    // Clear status when input changes
     clearStatus();
 }
 
@@ -118,23 +113,14 @@ async function generatePR() {
         model: modelSelect.value
     };
 
-    // Get the number of files
     const numFiles = body.selected_files.length;
-
-    // Get the token count from the DOM
     const tokenCountSpan = document.getElementById('tokenCount');
-    const tokenText = tokenCountSpan.textContent; // e.g., "(123 tokens selected)"
-    const matches = tokenText.match(/(\d+) tokens selected/);
+    const matches = tokenCountSpan.textContent.match(/(\d+) tokens selected/);
     const numTokens = matches ? parseInt(matches[1], 10) : 0;
-
-    // Get model name
     const modelName = modelSelect.value;
 
-    // Add log entry
     addLogEntry(`A new request was dispatched for ${numFiles} files (${numTokens} tokens) to model ${modelName}`, 'info');
     
-    // Remove this line to keep existing log entries
-    // logSection.innerHTML = '';
     currentStage.textContent = '';
     stageTiming.textContent = '';
     
@@ -161,75 +147,12 @@ async function generatePR() {
                 buffer = buffer.slice(boundary + 1);
 
                 if (line) {
-                    // Handle lines that start with 'data: '
                     if (line.startsWith('data: ')) {
                         line = line.slice(6);
                     }
                     try {
                         const event = JSON.parse(line);
-
-                        if (event.timing) {
-                            stageTiming.textContent = formatStageTime(event.timing);
-                        }
-
-                        if (event.stage) {
-                            addLogEntry(`${event.stage}: ${event.message}`, event.stage);
-                            if (event.llm_stats) {
-                                const stats = event.llm_stats;
-                                const statsMessage = `LLM Stats - Total Tokens: ${stats.total_tokens}, Prompt Tokens: ${stats.prompt_tokens}, Completion Tokens: ${stats.completion_tokens}, Cost: $${stats.cost.toFixed(4)}`;
-                                addLogEntry(statsMessage, 'stats');
-                            }
-                        } else if (event.type) {
-                            switch (event.type) {
-                                case 'info':
-                                    currentStage.textContent = event.message;
-                                    addLogEntry(event.message, 'info');
-                                    if (event.llm_stats) {
-                                        const stats = event.llm_stats;
-                                        const statsMessage = `LLM Stats - Total Tokens: ${stats.total_tokens}, Prompt Tokens: ${stats.prompt_tokens}, Completion Tokens: ${stats.completion_tokens}, Cost: $${stats.cost.toFixed(4)}`;
-                                        addLogEntry(statsMessage, 'stats');
-                                    }
-                                    break;
-
-                                case 'error':
-                                    addLogEntry(event.message, 'error');
-                                    setStatusError();
-                                    break;
-
-                                case 'complete':
-                                    const prUrl = event.pr_url;
-                                    const message = prUrl.startsWith('local://') ?
-                                        `Local branch created: ${prUrl.replace('local://', '')}` :
-                                        `PR created: ${prUrl}`;
-                                    addLogEntry(message, 'success');
-
-                                    if (event.pr_description) {
-                                        addLogEntry('PR Description:', 'info');
-                                        addLogEntry(event.pr_description, 'pr-description');
-                                    }
-
-                                    if (event.timings) {
-                                        addLogEntry('Stage Timings:', 'info');
-                                        Object.entries(event.timings).forEach(([stage, time]) => {
-                                            addLogEntry(`${stage}: ${formatStageTime(time)}`, 'info');
-                                        });
-                                    }
-
-                                    if (event.llm_stats) {
-                                        const stats = event.llm_stats;
-                                        const statsMessage = `Total Tokens: ${stats.total_tokens}, Cost: $${stats.cost.toFixed(4)}`;
-                                        addLogEntry(statsMessage, 'stats');
-                                    }
-                                    setStatusSuccess();
-                                    break;
-
-                                default:
-                                    console.warn('Unknown event type', event);
-                                    break;
-                            }
-                        } else {
-                            console.warn('Unknown event format', event);
-                        }
+                        handleEvent(event);
                     } catch (error) {
                         console.error('Failed to parse JSON:', line, error);
                     }
@@ -250,11 +173,79 @@ async function generatePR() {
     }
 }
 
+function handleEvent(event) {
+    if (event.timing) {
+        stageTiming.textContent = formatStageTime(event.timing);
+    }
+
+    if (event.stage) {
+        addLogEntry(`${event.stage}: ${event.message}`, event.stage);
+        if (event.llm_stats) {
+            addLLMStats(event.llm_stats);
+        }
+    } else if (event.type) {
+        switch (event.type) {
+            case 'info':
+                currentStage.textContent = event.message;
+                addLogEntry(event.message, 'info');
+                if (event.llm_stats) {
+                    addLLMStats(event.llm_stats);
+                }
+                break;
+
+            case 'error':
+                addLogEntry(event.message, 'error');
+                setStatusError();
+                break;
+
+            case 'complete':
+                handleCompletion(event);
+                break;
+
+            default:
+                console.warn('Unknown event type', event);
+                break;
+        }
+    } else {
+        console.warn('Unknown event format', event);
+    }
+}
+
+function addLLMStats(stats) {
+    const statsMessage = `LLM Stats - Total Tokens: ${stats.total_tokens}, Prompt Tokens: ${stats.prompt_tokens}, Completion Tokens: ${stats.completion_tokens}, Cost: $${stats.cost.toFixed(4)}`;
+    addLogEntry(statsMessage, 'stats');
+}
+
+function handleCompletion(event) {
+    const prUrl = event.pr_url;
+    const message = prUrl.startsWith('local://') ?
+        `Local branch created: ${prUrl.replace('local://', '')}` :
+        `PR created: ${prUrl}`;
+    addLogEntry(message, 'success');
+
+    if (event.pr_description) {
+        addLogEntry('PR Description:', 'info');
+        addLogEntry(event.pr_description, 'pr-description');
+    }
+
+    if (event.timings) {
+        addLogEntry('Stage Timings:', 'info');
+        Object.entries(event.timings).forEach(([stage, time]) => {
+            addLogEntry(`${stage}: ${formatStageTime(time)}`, 'info');
+        });
+    }
+
+    if (event.llm_stats) {
+        const stats = event.llm_stats;
+        const statsMessage = `Total Tokens: ${stats.total_tokens}, Cost: $${stats.cost.toFixed(4)}`;
+        addLogEntry(statsMessage, 'stats');
+    }
+    setStatusSuccess();
+}
+
 // Event listeners
 promptInput.addEventListener('input', updateSubmitButton);
-
 fileList.setSelectionChangeHandler(updateSubmitButton);
-
 submitBtn.addEventListener('click', generatePR);
 
 // Initialize
@@ -266,7 +257,6 @@ async function initialize() {
             loadModels()
         ]);
     }
-    // Add a test log entry to ensure the log section is working
     addLogEntry('GitIQ initialized successfully', 'info');
 }
 

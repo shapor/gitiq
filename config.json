@@ -1,7 +1,7 @@
 {
   "git": {
-    "author": "GitIQ Bot <gitiq-bot@gmail.com>",
-    "committer": "GitIQ Bot <gitiq-bot@gmail.com>"
+    "name": "GitIQ Bot",
+    "email": "gitiq-bot@gmail.com"
   },
   "llm_apis": {
     "openai": { "api_base": "https://api.openai.com/v1", "api_key": "OPENAI_API_KEY" },

@@ -7,7 +7,7 @@ import time
 import logging
 from concurrent.futures import ThreadPoolExecutor
 from flask import Flask, request, jsonify, Response, send_from_directory
-from git import Repo, InvalidGitRepositoryError
+from git import Repo, InvalidGitRepositoryError, Actor
 from git.exc import GitCommandError
 
 from llm_integration import load_llm_config, list_models
@@ -31,8 +31,11 @@ app.debug = False
 # Load configuration
 with open('config.json') as f:
     config = json.load(f)
-    GIT_AUTHOR = config.get('git', {}).get('author', 'GitIQ-bot <gitiq-bot@github.com>')
-    GIT_COMMITTER = config.get('git', {}).get('committer', 'GitIQ-bot <gitiq-bot@github.com>')
+    git_config = config.get('git', {})
+    GIT_BOT = Actor(
+        git_config.get('name', 'GitIQ-bot'),
+        git_config.get('email', 'gitiq-bot@github.com')
+    )
 
 # Load LLM configuration
 load_llm_config('config.json')
@@ -185,7 +188,7 @@ def create_pr():
                         {
                             "role": "system",
                             "content": """Generate changes for the specified files based on the prompt. 
-                            Return ONLY a JSON object with the following structure, no additional next or content before or after the JSON as follows:
+                            Return ONLY a JSON object with the following structure, no additional next or content before or after the JSON as follows::
                             {
                                 "changes": {
                                     "file_path": "new_content",
@@ -284,8 +287,8 @@ Model: {model}
 """
                 repo.index.commit(
                     commit_message,
-                    author=GIT_AUTHOR,
-                    committer=GIT_COMMITTER
+                    author=GIT_BOT,
+                    committer=GIT_BOT
                 )
                 yield stream.event("info", {"message": "Changes committed"})
 

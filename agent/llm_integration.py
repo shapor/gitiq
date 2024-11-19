@@ -82,6 +82,7 @@ def chat_completion(
     logger.debug(f"LLM Input:\n{messages}\nLLM Metadata: {kwargs}")
     
     model = _models[model_name]
+    max_output_tokens = model.get('max_output_tokens', 4000)
     if not model.get('nojson', False) and json_output:
         kwargs['response_format'] = {"type": "json_object"}
     api_config = _llm_apis[model['llm_api']]
@@ -93,7 +94,7 @@ def chat_completion(
         response = openai.ChatCompletion.create(
             model=model['name'],
             messages=messages,
-            max_tokens=8192,
+            max_tokens=max_output_tokens,
             n=1,
             stop=None,
             temperature=0.1,
@@ -113,7 +114,7 @@ def chat_completion(
             model=model['name'],
             system=system_message,
             messages=user_messages,
-            max_tokens=8192,  # Required by Anthropic
+            max_tokens=max_output_tokens,
             temperature=0.1,
             **kwargs
         )

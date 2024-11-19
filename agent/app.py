@@ -190,15 +190,15 @@ def create_pr():
                             "content": """Generate changes for the specified files based on the prompt.  You need to return the ENTIRE updated file(s).  Follow the style guide and don't make another other changes, removing comments, etc.
 Return ONLY a JSON object with the following structure, no additional next or content before or after the JSON as follows, making sure the output is VALID JSON escaping newlines as \\n, etc:
 {
-  "changes": {
-    "file_path.txt": "new_content based on 'Requested changes' user prompt",
+  \"changes\": {
+    \"file_path.txt\": \"new_content based on 'Requested changes' user prompt\",
     ...
   },
-  "new_files": {
-    "new_file_path.txt": "content of the new file",
+  \"new_files\": {
+    \"new_file_path.txt\": \"content of the new file\",
     ...
   },
-  "summary": "detailed description of changes made"
+  \"summary\": \"detailed description of changes made\"
 }"""
                         },
                         {
@@ -225,22 +225,30 @@ Return ONLY a JSON object with the following structure, no additional next or co
                 summary = changes_response.get("summary", "No summary provided")
                 yield stream.event("info", {"message": "Changes generated"})
 
-            # Generate branch name and PR description based on the changes
+            # Generate branch name, commit message, and PR description based on the changes
             with stream.stage("generate_metadata"):
                 try:
-                    branch_and_description = stream.chat(
+                    branch_description_commit = stream.chat(
                         messages=[
                             {
                                 "role": "system",
-                                "content": """Return ONLY a JSON object with the following structure, no additional next or content before or after the JSON as follows, making sure the output is VALID JSON escaping newlines as \\n, etc:
+                                "content": """Return ONLY a JSON object with the following structure, no additional text or content before or after the JSON as follows, making sure the output is VALID JSON escaping newlines as \\n, etc:
 {
-  "branch_name": "GitIQ-feature-name",
-  "pr_description": "Full PR description in markdown"
+  \"branch_name\": \"GitIQ-feature-name\",
+  \"pr_description\": \"Full PR description in markdown\",
+  \"commit_message\": \"Commit message following best practices, first line summary (<72 chars), then blank line, then details\"
 }
 Branch name must:
 - Start with GitIQ-
 - Use only lowercase letters, numbers, and hyphens
-- Maximum 50 characters"""
+- Maximum 50 characters
+
+Commit message should:
+- Be in present tense
+- First line summary less than 72 characters
+- Second line should be blank
+- Following lines can include detailed description
+- Should not include markdown headers or special formatting"""
                             },
                             {
                                 "role": "user",
@@ -251,28 +259,31 @@ Branch name must:
                         json_output=True
                     )
 
-                    if isinstance(branch_and_description, str):
+                    if isinstance(branch_description_commit, str):
                         try:
-                            branch_and_description = json.loads(branch_and_description, strict=False)
+                            branch_description_commit = json.loads(branch_description_commit, strict=False)
                         except json.JSONDecodeError:
-                            logger.error(f"Failed to parse JSON response: {branch_and_description}")
+                            logger.error(f"Failed to parse JSON response: {branch_description_commit}")
                             raise ValueError("Invalid JSON response from LLM")
 
-                    if not isinstance(branch_and_description, dict):
-                        logger.error(f"Bad branch/description response: {str(branch_and_description)}")
+                    if not isinstance(branch_description_commit, dict):
+                        logger.error(f"Bad branch/description/commit response: {str(branch_description_commit)}")
                         raise ValueError("Invalid response format from LLM")
 
-                    branch_name = branch_and_description.get("branch_name", "")
+                    branch_name = branch_description_commit.get("branch_name", "")
                     if not branch_name.startswith("GitIQ-") or len(branch_name) > 50:
                         branch_name = generate_branch_name(summary)
 
-                    pr_description = branch_and_description.get("pr_description", summary)
+                    pr_description = branch_description_commit.get("pr_description", summary)
+                    commit_message = branch_description_commit.get("commit_message", pr_description.split('\n')[0])
+
                 except Exception as e:
-                    logger.error(f"Error generating branch name/description: {str(e)}")
+                    logger.error(f"Error generating branch name/description/commit message: {str(e)}")
                     branch_name = generate_branch_name(summary)
                     pr_description = summary
+                    commit_message = summary
 
-                yield stream.event("info", {"message": "Branch name and PR description generated"})
+                yield stream.event("info", {"message": "Branch name, commit message, and PR description generated"})
 
             # Now that we have the changes, create and checkout the branch
             repo = Repo(os.getcwd())
@@ -306,11 +317,6 @@ Branch name must:
             # Commit changes
             with stream.stage("commit_changes"):
                 repo.index.add(modified_files)
-                commit_message = f"""
-{pr_description}
-
-Model: {model}
-"""
                 repo.index.commit(
                     commit_message,
                     author=GIT_BOT,
@@ -321,10 +327,12 @@ Model: {model}
             # Create PR (placeholder)
             with stream.stage("create_pr"):
                 pr_url = f"local://{branch_name}"
+                pr_description_with_model = f"{pr_description}\n\nModel: {model}"
                 yield stream.event("complete", {
                     "pr_url": pr_url,
                     "message": "PR created successfully",
-                    "branch": branch_name
+                    "branch": branch_name,
+                    "pr_description": pr_description_with_model
                 })
 
         except Exception as e:

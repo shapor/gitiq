@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GitIQ - AI Pull Request Generator</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/diff-highlight/prism-diff-highlight.min.css">
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -115,8 +117,80 @@
             color: #666;
             margin-left: 10px;
         }
-        .file-list {
-            margin-top: 20px;
+        .diff-view {
+            display: none;
+            padding: 10px;
+            margin: 10px 0;
+            background: #f6f8fa;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .diff-view.expanded {
+            display: block;
+        }
+        .file-row {
+            cursor: pointer;
+        }
+        .file-row:hover {
+            background: #f5f5f5;
+        }
+        .diff-line {
+            display: flex;
+            font-family: monospace;
+            font-size: 12px;
+            line-height: 1.5;
+        }
+        .diff-line-number {
+            color: #999;
+            padding: 0 8px;
+            border-right: 1px solid #ddd;
+            text-align: right;
+            min-width: 40px;
+            user-select: none;
+        }
+        .diff-line-content {
+            padding: 0 8px;
+            white-space: pre;
+        }
+        .diff-line.deletion {
+            background-color: #ffeef0;
+        }
+        .diff-line.addition {
+            background-color: #e6ffec;
+        }
+        .diff-line.info {
+            background-color: #f1f8ff;
+            color: #666;
+        }
+        .expand-button {
+            padding: 2px 6px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #666;
+        }
+        .expand-button:hover {
+            color: #0366d6;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 12px;
+            font-weight: 500;
+            margin-left: 8px;
+        }
+        .status-modified {
+            background: #fff3dc;
+            color: #b08800;
+        }
+        .status-untracked {
+            background: #e6ffec;
+            color: #22863a;
+        }
+        .status-deleted {
+            background: #ffeef0;
+            color: #cb2431;
         }
         .file-list table {
             width: 100%;
@@ -129,12 +203,6 @@
         }
         .file-list th {
             background-color: #f2f2f2;
-        }
-        .file-item.modified {
-            color: #e6a700;
-        }
-        .file-item.untracked {
-            color: #28a745;
         }
     </style>
 </head>
@@ -182,6 +250,7 @@
                     <thead>
                         <tr>
                             <th>Select</th>
+                            <th></th>
                             <th>File Name</th>
                             <th>Last Modified</th>
                             <th>File Size</th>
@@ -196,14 +265,18 @@
         </div>
     </div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/diff-highlight/prism-diff-highlight.min.js"></script>
+    <script src="file-list.js"></script>
     <script>
+        // Initialize file list
+        const fileList = new FileList('fileList');
+        
         // State management
-        let selectedFiles = new Set();
         let isProcessing = false;
 
         // DOM elements
         const repoStatus = document.getElementById('repoStatus');
-        const fileList = document.getElementById('fileList').querySelector('tbody');
         const modelSelect = document.getElementById('modelSelect');
         const promptInput = document.getElementById('promptInput');
         const submitBtn = document.getElementById('submitBtn');
@@ -235,63 +308,6 @@
             }
         }
 
-        async function loadFileStructure() {
-            try {
-                const response = await fetch('/api/files');
-                const files = await response.json();
-
-                fileList.innerHTML = '';
-                
-                files.sort((a, b) => a.path.localeCompare(b.path));
-                
-                files.forEach(file => {
-                    const row = document.createElement('tr');
-                    row.className = `file-item ${file.git_status}`;
-                    
-                    const checkboxCell = document.createElement('td');
-                    const checkbox = document.createElement('input');
-                    checkbox.type = 'checkbox';
-                    checkbox.checked = selectedFiles.has(file.path);
-                    checkbox.addEventListener('change', () => {
-                        if (checkbox.checked) {
-                            selectedFiles.add(file.path);
-                        } else {
-                            selectedFiles.delete(file.path);
-                        }
-                        updateSubmitButton();
-                    });
-                    checkboxCell.appendChild(checkbox);
-                    row.appendChild(checkboxCell);
-
-                    const nameCell = document.createElement('td');
-                    nameCell.textContent = file.path;
-                    row.appendChild(nameCell);
-
-                    const modifiedCell = document.createElement('td');
-                    modifiedCell.textContent = new Date(file.mtime * 1000).toLocaleString();
-                    row.appendChild(modifiedCell);
-
-                    const sizeCell = document.createElement('td');
-                    sizeCell.textContent = `${(file.size / 1024).toFixed(2)} KB`;
-                    row.appendChild(sizeCell);
-
-                    const tokenCell = document.createElement('td');
-                    tokenCell.textContent = file.tokens;
-                    row.appendChild(tokenCell);
-
-                    fileList.appendChild(row);
-                });
-            } catch (error) {
-                fileList.innerHTML = `<tr><td colspan="5" class="error">Error loading files: ${error.message}</td></tr>`;
-            }
-        }
-
-        function updateSubmitButton() {
-            submitBtn.disabled = isProcessing || 
-                selectedFiles.size === 0 || 
-                !promptInput.value.trim();
-        }
-
         async function loadModels() {
             try {
                 const response = await fetch('/api/models');
@@ -317,6 +333,12 @@
             return ms ? `(${(ms / 1000).toFixed(1)}s)` : '';
         }
 
+        function updateSubmitButton() {
+            submitBtn.disabled = isProcessing || 
+                fileList.getSelectedFiles().length === 0 || 
+                !promptInput.value.trim();
+        }
+
         async function generatePR() {
             if (isProcessing) return;
             
@@ -329,7 +351,7 @@
             
             const body = {
                 prompt: promptInput.value,
-                selected_files: Array.from(selectedFiles),
+                selected_files: fileList.getSelectedFiles(),
                 model: modelSelect.value
             };
 
@@ -353,12 +375,10 @@
                         .map(line => JSON.parse(line.slice(6)));
 
                     for (const event of events) {
-                        // Update stage timing if available
                         if (event.timing) {
                             stageTiming.textContent = formatStageTime(event.timing);
                         }
 
-                        // Handle different event types
                         switch (event.type) {
                             case 'info':
                                 currentStage.textContent = event.message;
@@ -397,19 +417,21 @@
                 currentStage.textContent = '';
                 stageTiming.textContent = '';
                 updateSubmitButton();
+                await fileList.load(); // Reload file list to show new changes
             }
         }
 
         // Event listeners
         promptInput.addEventListener('input', updateSubmitButton);
         submitBtn.addEventListener('click', generatePR);
+        fileList.setSelectionChangeHandler(updateSubmitButton);
 
         // Initialize
         async function initialize() {
             const repoOk = await checkRepoStatus();
             if (repoOk) {
                 await Promise.all([
-                    loadFileStructure(),
+                    fileList.load(),
                     loadModels()
                 ]);
             }

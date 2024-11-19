@@ -49,11 +49,18 @@ def get_file_structure(repo_path="."):
     """Get repository file structure with Git status"""
     try:
         repo = Repo(repo_path)
+        
+        # Get tracked files using git ls-files
+        tracked_files = set(repo.git.ls_files().splitlines())
+        
+        # Get untracked files excluding ignored ones using git ls-files --others --exclude-standard
+        untracked_files = set(repo.git.ls_files('--others', '--exclude-standard').splitlines())
+        
+        # Get modified files
         status = repo.index.diff(None)
-        untracked = repo.untracked_files
-
+        
         def get_git_status(file_path):
-            if file_path in untracked:
+            if file_path in untracked_files:
                 return "untracked"
             for diff in status:
                 if diff.a_path == file_path:
@@ -64,37 +71,32 @@ def get_file_structure(repo_path="."):
                     else:
                         return "modified"
             return "unmodified"
-
+        
         result = []
-        for root, _, files in os.walk(repo_path):
-            if ".git" in root:
-                continue
-            for file in files:
-                file_path = os.path.join(root, file).replace("\\", "/")
-                if file_path.startswith("./"):
-                    file_path = file_path[2:]
+        # Process all files (tracked + untracked)
+        for file_path in tracked_files | untracked_files:
+            try:
+                with open(file_path, 'r') as f:
+                    content = f.read()
+                    is_binary = '\0' in content
+                    lines = len(content.splitlines()) if not is_binary else 0
+                    tokens = len(content.split()) if not is_binary else 0
+            except:
+                is_binary = True
+                lines = 0
+                tokens = 0
 
-                try:
-                    with open(file_path, 'r') as f:
-                        content = f.read()
-                        is_binary = '\0' in content
-                        lines = len(content.splitlines()) if not is_binary else 0
-                        tokens = len(content.split()) if not is_binary else 0  # TODO: use tiktoken to count actual tokens
-                except:
-                    is_binary = True
-                    lines = 0
-                    tokens = 0
-
-                result.append({
-                    "path": file_path,
-                    "size": os.path.getsize(file_path),
-                    "mtime": int(os.path.getmtime(file_path)),
-                    "is_binary": is_binary,
-                    "lines": lines,
-                    "tokens": tokens,
-                    "git_status": get_git_status(file_path),
-                    "diff": None  # TODO: Add diff implementation if needed
-                })
+            result.append({
+                "path": file_path,
+                "size": os.path.getsize(file_path),
+                "mtime": int(os.path.getmtime(file_path)),
+                "is_binary": is_binary,
+                "lines": lines,
+                "tokens": tokens,
+                "git_status": get_git_status(file_path),
+                "diff": None  # TODO: Add diff implementation if needed
+            })
+        
         return result
     except InvalidGitRepositoryError:
         return []

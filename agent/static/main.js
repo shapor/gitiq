@@ -97,54 +97,71 @@ async function generatePR() {
 
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
+        let buffer = '';
 
         while (true) {
             const {value, done} = await reader.read();
             if (done) break;
-            
-            const events = decoder.decode(value)
-                .split('\n\n')
-                .filter(line => line.startsWith('data: '))
-                .map(line => JSON.parse(line.slice(6)));
 
-            for (const event of events) {
-                if (event.timing) {
-                    stageTiming.textContent = formatStageTime(event.timing);
+            buffer += decoder.decode(value);
+
+            let boundary = buffer.indexOf('\n');
+            while (boundary !== -1) {
+                const line = buffer.slice(0, boundary).trim();
+                buffer = buffer.slice(boundary + 1);
+
+                if (line) {
+                    try {
+                        const event = JSON.parse(line);
+
+                        if (event.timing) {
+                            stageTiming.textContent = formatStageTime(event.timing);
+                        }
+
+                        if (event.stage) {
+                            addLogEntry(`${event.stage}: ${event.message}`, 'info');
+                        } else if (event.type) {
+                            switch (event.type) {
+                                case 'info':
+                                    currentStage.textContent = event.message;
+                                    addLogEntry(event.message);
+                                    if (event.stats) {
+                                        addLogEntry(`Stats: ${JSON.stringify(event.stats)}`, 'stats');
+                                    }
+                                    break;
+
+                                case 'error':
+                                    addLogEntry(event.message, 'error');
+                                    break;
+
+                                case 'complete':
+                                    const prUrl = event.pr_url;
+                                    const message = prUrl.startsWith('local://') ?
+                                        `Local branch created: ${prUrl.replace('local://', '')}` :
+                                        `PR created: ${prUrl}`;
+                                    addLogEntry(message, 'success');
+                                    
+                                    if (event.timings) {
+                                        addLogEntry('Stage Timings:', 'info');
+                                        Object.entries(event.timings).forEach(([stage, time]) => {
+                                            addLogEntry(`${stage}: ${formatStageTime(time)}`, 'info');
+                                        });
+                                    }
+                                    break;
+
+                                default:
+                                    console.warn('Unknown event type', event);
+                                    break;
+                            }
+                        } else {
+                            console.warn('Unknown event format', event);
+                        }
+                    } catch (error) {
+                        console.error('Failed to parse JSON:', line, error);
+                    }
                 }
 
-                switch (event.type) {
-                    case 'info':
-                        currentStage.textContent = event.message;
-                        addLogEntry(event.message);
-                        if (event.stats) {
-                            addLogEntry(`Stats: ${JSON.stringify(event.stats)}`, 'stats');
-                        }
-                        break;
-
-                    case 'error':
-                        addLogEntry(event.message, 'error');
-                        break;
-
-                    case 'complete':
-                        const prUrl = event.pr_url;
-                        const message = prUrl.startsWith('local://') ?
-                            `Local branch created: ${prUrl.replace('local://', '')}` :
-                            `PR created: ${prUrl}`;
-                        addLogEntry(message, 'success');
-                        
-                        if (event.timings) {
-                            addLogEntry('Stage Timings:', 'info');
-                            Object.entries(event.timings).forEach(([stage, time]) => {
-                                addLogEntry(`${stage}: ${formatStageTime(time)}`, 'info');
-                            });
-                        }
-                        break;
-
-                    // Add this case to handle 'stage' events
-                    case 'stage':
-                        addLogEntry(`${event.stage}: ${event.message}`, 'info');
-                        break;
-                }
+                boundary = buffer.indexOf('\n');
             }
         }
     } catch (error) {

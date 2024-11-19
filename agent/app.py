@@ -171,7 +171,7 @@ def create_pr():
                         {"role": "system", "content": "Generate a short, kebab-case branch name from the description. Use only lowercase letters, numbers, and hyphens. Max length 50 chars. Format: GitIQ-{name}"},
                         {"role": "user", "content": prompt}
                     ],
-                    model_name="gpt-3.5-turbo"
+                    model_name=model
                 ).strip()
                 new_branch = repo.create_head(branch_name)
                 new_branch.checkout()

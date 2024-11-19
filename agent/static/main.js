@@ -122,10 +122,14 @@ async function generatePR() {
 
             let boundary = buffer.indexOf('\n');
             while (boundary !== -1) {
-                const line = buffer.slice(0, boundary).trim();
+                let line = buffer.slice(0, boundary).trim();
                 buffer = buffer.slice(boundary + 1);
 
                 if (line) {
+                    // Handle lines that start with 'data: '
+                    if (line.startsWith('data: ')) {
+                        line = line.slice(6);
+                    }
                     try {
                         const event = JSON.parse(line);
 

@@ -12,6 +12,7 @@ from queue import Queue
 import openai
 import anthropic
 from anthropic import Anthropic
+import tiktoken
 
 # Configure logging
 logging.basicConfig(
@@ -147,3 +148,21 @@ def chat_completion(
         llm_output = llm_output[llm_output.find('{'):]
 
     return llm_output
+
+def count_tokens(text: str, model_name: str = "gpt-3.5-turbo") -> int:
+    """
+    Count the number of tokens in a given text using the specified model's tokenizer.
+    
+    Args:
+        text: The input text to tokenize
+        model_name: The name of the model to use for tokenization (default: gpt-3.5-turbo)
+        
+    Returns:
+        The number of tokens in the text
+    """
+    try:
+        encoding = tiktoken.encoding_for_model(model_name)
+    except KeyError:
+        encoding = tiktoken.get_encoding("cl100k_base")
+    
+    return len(encoding.encode(text))

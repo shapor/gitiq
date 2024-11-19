@@ -10,7 +10,7 @@ from flask import Flask, request, jsonify, Response, send_from_directory
 from git import Repo, InvalidGitRepositoryError, Actor
 from git.exc import GitCommandError
 
-from llm_integration import load_llm_config, list_models
+from llm_integration import load_llm_config, list_models, count_tokens
 from stream_events import StreamProcessor
 
 def setup_logging():
@@ -89,7 +89,7 @@ def get_file_structure(repo_path="."):
                         is_binary = '\0' in content
                         if not is_binary:
                             lines = len(content.splitlines())
-                            tokens = len(content.split())
+                            tokens = count_tokens(content)
                 except UnicodeDecodeError:
                     is_binary = True
 
@@ -207,7 +207,7 @@ Return ONLY a JSON object with the following structure, no additional next or co
                 )
                 if isinstance(changes_response, str):
                     try:
-                        changes_response = json.loads(changes_response)
+                        changes_response = json.loads(changes_response, strict=False)
                     except json.JSONDecodeError:
                         logger.error(f"Failed to parse JSON response: {changes_response}")
                         raise ValueError("Invalid JSON response from LLM")
@@ -248,7 +248,7 @@ Branch name must:
 
                     if isinstance(branch_and_description, str):
                         try:
-                            branch_and_description = json.loads(branch_and_description)
+                            branch_and_description = json.loads(branch_and_description, strict=False)
                         except json.JSONDecodeError:
                             logger.error(f"Failed to parse JSON response: {branch_and_description}")
                             raise ValueError("Invalid JSON response from LLM")

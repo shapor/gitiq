@@ -283,6 +283,7 @@ Branch name must:
                 modified_files = []
                 for file_path, content in changes.items():
                     if file_path in selected_files:  # Only modify selected files
+                        logger.info(f"modifed file: {file_path}")
                         with open(file_path, 'w') as f:
                             f.write(content)
                         modified_files.append(file_path)

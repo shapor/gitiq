@@ -100,6 +100,9 @@ function updateSubmitButton() {
     } else {
         submitMessage.textContent = '';
     }
+    
+    // Clear status when input changes
+    clearStatus();
 }
 
 async function generatePR() {
@@ -248,15 +251,9 @@ async function generatePR() {
 }
 
 // Event listeners
-promptInput.addEventListener('input', function() {
-    clearStatus();
-    updateSubmitButton();
-});
+promptInput.addEventListener('input', updateSubmitButton);
 
-fileList.setSelectionChangeHandler(function() {
-    clearStatus();
-    updateSubmitButton();
-});
+fileList.setSelectionChangeHandler(updateSubmitButton);
 
 submitBtn.addEventListener('click', generatePR);
 

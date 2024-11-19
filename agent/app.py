@@ -10,6 +10,7 @@ from git import Repo, InvalidGitRepositoryError, Actor
 
 from llm_integration import load_llm_config, list_models, count_tokens
 from stream_events import StreamProcessor
+from github_integration import create_github_pr
 
 def setup_logging():
     handler = logging.StreamHandler()
@@ -34,6 +35,7 @@ with open('config.json') as f:
         git_config.get('name', 'GitIQ-bot'),
         git_config.get('email', 'gitiq-bot@github.com')
     )
+    GITHUB_ENABLED = config.get('github', {}).get('enabled', False)
 
 # Load LLM configuration
 load_llm_config('config.json')
@@ -343,16 +345,25 @@ PR description should include:
                 )
                 yield stream.event("info", {"message": "Changes committed"})
 
-            # Create PR (placeholder)
+            # Create PR
             with stream.stage("create_pr"):
-                pr_url = f"local://{branch_name}"
                 pr_description_with_model = f"{pr_description}\n\nModel: {model}"
-                yield stream.event("complete", {
-                    "pr_url": pr_url,
-                    "message": "PR created successfully",
-                    "branch": branch_name,
-                    "pr_description": pr_description_with_model
-                })
+                if GITHUB_ENABLED:
+                    pr_url = create_github_pr(branch_name, pr_description_with_model)
+                    yield stream.event("complete", {
+                        "pr_url": pr_url,
+                        "message": "GitHub PR created successfully",
+                        "branch": branch_name,
+                        "pr_description": pr_description_with_model
+                    })
+                else:
+                    pr_url = f"local://{branch_name}"
+                    yield stream.event("complete", {
+                        "pr_url": pr_url,
+                        "message": "Local branch created successfully",
+                        "branch": branch_name,
+                        "pr_description": pr_description_with_model
+                    })
 
         except Exception as e:
             logger.exception("Error processing request")

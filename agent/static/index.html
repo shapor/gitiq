@@ -82,11 +82,19 @@
             height: 200px;
             overflow-y: auto;
             font-family: monospace;
+            transition: all 0.3s ease;
         }
         .log-entry {
             margin: 5px 0;
             padding: 5px;
             border-left: 3px solid #ddd;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+        .log-entry.visible {
+            opacity: 1;
+            transform: translateY(0);
         }
         .log-entry.error {
             border-left-color: #dc3545;
@@ -326,6 +334,7 @@
             entry.className = `log-entry ${type}`;
             entry.textContent = message;
             logSection.appendChild(entry);
+            setTimeout(() => entry.classList.add('visible'), 10); // Trigger animation
             logSection.scrollTop = logSection.scrollHeight;
         }
 

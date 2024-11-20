@@ -18,7 +18,7 @@ def setup_logging():
         logging.Formatter("%(asctime)s - %(name)s - level=%(levelname)s - %(message)s"))
     logger = logging.getLogger()
     logger.addHandler(handler)
-    logger.setLevel(logging.INFO)
+    logger.setLevel(logging.DEBUG)
     return logger
 
 logger = setup_logging()

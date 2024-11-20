@@ -5,10 +5,10 @@
     "email": "gitiq-bot@gmail.com"
   },
   "github": {
-    "enabled": false,
+    "enabled": true,
     "access_token": "GITHUB_ACCESS_TOKEN",
-    "repo_owner": "your-github-username",
-    "repo_name": "your-repo-name"
+    "repo_owner": "edmundmae",
+    "repo_name": "gitiq"
   },
   "llm_apis": {
     "openai": { "api_base": "https://api.openai.com/v1", "api_key": "OPENAI_API_KEY" },

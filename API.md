@@ -77,15 +77,16 @@ The `diff` field contains:
 POST /api/pr/create/stream
 ```
 
-Creates a new PR and streams status updates.
+Creates a new change in a local branch or a GitHub Pull Request and streams status updates.
 
 **Parameters**
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| prompt | string | Yes | Description of desired changes |
-| selected_files | string[] | Yes | Array of file paths to modify |
-| context_files | string[] | No | Array of file paths providing additional context |
-| model | string | No | LLM model to use (default: system configured) |
+| Name            | Type       | Required | Description                                                    |
+|-----------------|------------|----------|----------------------------------------------------------------|
+| prompt          | string     | Yes      | Description of desired changes                                 |
+| selected_files  | string[]   | Yes      | Array of file paths to modify                                  |
+| context_files   | string[]   | No       | Array of file paths providing additional context               |
+| model           | string     | No       | LLM model to use (default: system configured)                  |
+| change_type     | string     | No       | Type of change: `local` for local branch or `github` for PR (default based on system configuration) |
 
 **Example Request**
 ```json
@@ -93,7 +94,8 @@ Creates a new PR and streams status updates.
     "prompt": "Update auth system to use JWT tokens instead of cookies",
     "selected_files": ["src/auth.py", "src/user_model.py"],
     "context_files": ["docs/auth_requirements.md"],
-    "model": "gpt-4-turbo-preview"
+    "model": "gpt-4-turbo-preview",
+    "change_type": "github"
 }
 ```
 
@@ -137,6 +139,23 @@ Completion:
         "lines_changed": 156
     },
     "pr_url": "https://github.com/org/repo/pull/123"
+}
+```
+
+Completion for local branch:
+```json
+{
+    "type": "complete",
+    "message": "Local branch created successfully",
+    "stats": {
+        "prompt_tokens": 1420,
+        "completion_tokens": 843,
+        "total_cost": 0.05,
+        "elapsed_time": 4.3,
+        "files_modified": 2,
+        "lines_changed": 156
+    },
+    "pr_url": "local://GitIQ-auth-update"
 }
 ```
 

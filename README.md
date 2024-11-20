@@ -1,6 +1,6 @@
 # GitIQ
 
-GitIQ is an AI-powered pair programming tool that leverages Git as the primary interface, enabling seamless collaboration without the need for embedding in an IDE. With GitIQ, developers can describe changes in natural language and receive complete Pull Requests, enhancing productivity and simplifying the development workflow.
+GitIQ is an AI-powered pair programming tool that leverages Git as the primary interface, enabling seamless collaboration without the need for embedding in an IDE. With GitIQ, developers can describe changes in natural language and receive complete code modifications, enhancing productivity and simplifying the development workflow.
 
 ## Table of Contents
 
@@ -19,13 +19,13 @@ GitIQ is an AI-powered pair programming tool that leverages Git as the primary i
 ## Features
 
 - **Git Integration**: Uses Git as the primary interface, allowing for seamless integration into existing workflows.
-- **AI-Powered Code Changes**: Transforms natural language descriptions into complete Pull Requests.
+- **AI-Powered Code Changes**: Transforms natural language descriptions into code modifications in a local branch or a GitHub Pull Request.
 - **Context Preservation**: Maintains a clear history of AI-human collaboration through Git commits.
 - **Multi-File Support**: Handles changes across multiple files as coherent units of work.
-- **Reviewable PRs**: Generates PRs that can be reviewed and merged, fitting into standard code review processes.
+- **Reviewable Changes**: Generates changes that can be reviewed and merged, fitting into standard code review processes.
 - **Flexible Configuration**: Supports multiple LLM providers and models through easy-to-edit configuration files.
 - **IDE Agnostic**: Works with any editor or IDE since changes flow through Git.
-- **GitHub Integration**: Optionally integrates with GitHub to automatically create Pull Requests.
+- **Change Type Selection**: Choose between creating changes in a local branch or pushing to GitHub as a Pull Request.
 
 ## Quick Start
 
@@ -136,7 +136,7 @@ To enable GitHub integration, update the `config.json` file:
 - **repo_owner**: The owner of the repository.
 - **repo_name**: The name of the repository.
 
-**Note**: When GitHub integration is enabled, GitIQ will push the new branches to the remote repository (`origin`) to create Pull Requests. Ensure that:
+**Note**: When GitHub integration is enabled, GitIQ can push new branches to the remote repository (`origin`) to create Pull Requests if the **Change Type** is set to **GitHub PR**. Ensure that:
 
 - You have the necessary permissions to push to the remote repository.
 - Your local repository is correctly connected to the remote via `origin`.
@@ -144,7 +144,7 @@ To enable GitHub integration, update the `config.json` file:
 
 ## Usage
 
-Once the application is running, you can start using GitIQ to assist with your coding tasks. Describe the changes you want to make in natural language, and GitIQ will generate the corresponding code changes and create a Pull Request for your review.
+Once the application is running, you can start using GitIQ to assist with your coding tasks. Describe the changes you want to make in natural language, select the **Change Type** (either **Local Branch** or **GitHub PR**), and GitIQ will generate the corresponding code changes. If you choose **Local Branch**, the changes will be committed to a new local branch. If you choose **GitHub PR**, GitIQ will push the branch to GitHub and create a Pull Request for your review.
 
 ## Documentation
 

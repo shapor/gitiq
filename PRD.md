@@ -16,7 +16,7 @@ GitIQ is a new approach to AI pair programming that uses Git as the interface ra
 2. GitIQ creates a semantically-named branch
 3. AI makes changes across selected files
 4. Changes are committed with detailed messages including prompts and model metadata
-5. PR is created for review
+5. **Optional**: PR is created for review if GitHub integration is enabled
 6. Future: Comments on PR become new prompts for iterative refinement **(post-MVP)**
 
 ## Requirements
@@ -29,7 +29,7 @@ GitIQ is a new approach to AI pair programming that uses Git as the interface ra
   - AI-generated description of changes
   - Includes LLM model name/version used
   - Optional: includes prompt tokens used and other metadata **(post-MVP)**
-- Opens PR with:
+- Optionally opens PR with:
   - Original prompt as PR description
   - AI-generated summary of changes and their impact
   - Links to attached context files **(post-MVP)**
@@ -38,8 +38,11 @@ GitIQ is a new approach to AI pair programming that uses Git as the interface ra
 ### User Interface
 #### Prompt Interface
 - Large text input field for main prompt
+- Slider or toggle for **Change Type** with options:
+  - **Local Branch**: Creates changes in a local git branch
+  - **GitHub PR**: Pushes branch and creates a GitHub Pull Request
 - Clear button to reset input **(post-MVP)**
-- Submit button to generate PR
+- Submit button to generate changes
 - Dropdown to select LLM model
 
 #### File Selection
@@ -58,11 +61,11 @@ GitIQ is a new approach to AI pair programming that uses Git as the interface ra
 - Clear option for attached files **(post-MVP)**
 
 ### Processing
-- Async processing of PR generation
+- Async processing of change generation
 - Simple loading indicator
 - Cancel capability for long-running operations **(post-MVP)**
 - Basic error handling with user feedback
-- Streaming updates during PR generation process
+- Streaming updates during change generation process
 
 ### Security & Authentication
 - Runs only on localhost
@@ -80,7 +83,7 @@ GitIQ is a new approach to AI pair programming that uses Git as the interface ra
 7. Invalid LLM configuration
 
 ### Success Metrics
-- Time from prompt to PR **(post-MVP)**
+- Time from prompt to branch/pr creation **(post-MVP)**
 - PR acceptance rate **(post-MVP)**
 - Number of iteration cycles needed **(post-MVP)**
 - File selection accuracy **(post-MVP)**
@@ -139,6 +142,14 @@ GitIQ uses a `config.json` file for various settings, including:
 - Git user configuration
 - LLM API endpoints and keys
 - Available models and their configurations
+- Default change type (`local` or `github`)
+
+### New Feature: Change Type Selection
+Users can now choose the type of change they want to create:
+- **Local Branch**: The changes are committed to a new local branch.
+- **GitHub PR**: The changes are pushed to a remote repository and a Pull Request is created on GitHub.
+
+This selection is made via a slider or toggle in the prompt interface.
 
 Questions for immediate implementation:
 1. Should we limit the number of context files for MVP?

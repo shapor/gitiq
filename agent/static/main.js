@@ -8,6 +8,7 @@ let isProcessing = false;
 const repoStatus = document.getElementById('repoStatus');
 const modelSelect = document.getElementById('modelSelect');
 const promptInput = document.getElementById('promptInput');
+const githubToggle = document.getElementById('githubToggle');
 const submitBtn = document.getElementById('submitBtn');
 const submitMessage = document.getElementById('submitMessage');
 const submitStatus = document.getElementById('submitStatus');
@@ -110,7 +111,8 @@ async function generatePR() {
     const body = {
         prompt: promptInput.value,
         selected_files: fileList.getSelectedFiles(),
-        model: modelSelect.value
+        model: modelSelect.value,
+        github_enabled: githubToggle.checked
     };
 
     const numFiles = body.selected_files.length;
@@ -247,6 +249,10 @@ function handleCompletion(event) {
 promptInput.addEventListener('input', updateSubmitButton);
 fileList.setSelectionChangeHandler(updateSubmitButton);
 submitBtn.addEventListener('click', generatePR);
+
+githubToggle.addEventListener('change', () => {
+    // Any additional logic when toggling GitHub PR creation can be added here
+});
 
 // Initialize
 async function initialize() {

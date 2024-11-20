@@ -125,19 +125,20 @@ def generate_branch_name(summary):
         logger.error(f"Error generating branch name: {str(e)}")
         return f"GitIQ-{int(time.time())}"
 
-def cleanup_failed_operation(repo, original_branch, new_branch_name):
+def cleanup_failed_operation(repo, original_branch, new_branch_name, github_enabled):
     """Clean up after failed PR creation"""
     try:
         if original_branch:
             original_branch.checkout()
         if new_branch_name and new_branch_name in repo.heads:
             repo.delete_head(new_branch_name, force=True)
-        # Attempt to delete remote branch
-        try:
-            repo.git.push('origin', '--delete', new_branch_name)
-            logger.info(f"Deleted remote branch '{new_branch_name}' from remote 'origin'")
-        except Exception as e:
-            logger.warning(f"Failed to delete remote branch '{new_branch_name}': {str(e)}")
+        # Attempt to delete remote branch if github_enabled
+        if github_enabled:
+            try:
+                repo.git.push('origin', '--delete', new_branch_name)
+                logger.info(f"Deleted remote branch '{new_branch_name}' from remote 'origin'")
+            except Exception as e:
+                logger.warning(f"Failed to delete remote branch '{new_branch_name}': {str(e)}")
     except Exception as e:
         logger.error(f"Failed to cleanup: {str(e)}")
 
@@ -168,6 +169,7 @@ def create_pr():
     selected_files = data.get('selected_files', [])
     context_files = data.get('context_files', [])
     model = data.get('model', 'gpt-4-turbo-preview')
+    github_enabled = data.get('github_enabled', GITHUB_ENABLED)
 
     if not prompt or not selected_files:
         return jsonify({"type": "error", "message": "Missing required fields"}), 400
@@ -351,21 +353,24 @@ PR description should include:
                 )
                 yield stream.event("info", {"message": "Changes committed"})
 
-            # Push changes to remote repository
-            with stream.stage("push_changes"):
-                try:
-                    repo.git.push('--set-upstream', 'origin', branch_name)
-                    yield stream.event("info", {"message": f"Branch '{branch_name}' pushed to remote 'origin'"})
-                except Exception as e:
-                    error_message = f"Failed to push branch '{branch_name}' to remote 'origin': {str(e)}"
-                    logger.error(error_message)
-                    yield stream.event("error", {"message": error_message})
-                    raise
+            # Push changes to remote repository if github_enabled
+            if github_enabled:
+                with stream.stage("push_changes"):
+                    try:
+                        repo.git.push('--set-upstream', 'origin', branch_name)
+                        yield stream.event("info", {"message": f"Branch '{branch_name}' pushed to remote 'origin'"})
+                    except Exception as e:
+                        error_message = f"Failed to push branch '{branch_name}' to remote 'origin': {str(e)}"
+                        logger.error(error_message)
+                        yield stream.event("error", {"message": error_message})
+                        raise
+            else:
+                yield stream.event("info", {"message": f"Local branch '{branch_name}' created but not pushed to remote"})
 
-            # Create PR
-            with stream.stage("create_pr"):
-                pr_description_with_model = f"{pr_description}\n\nModel: {model}"
-                if GITHUB_ENABLED:
+            # Create PR if github_enabled
+            if github_enabled:
+                with stream.stage("create_pr"):
+                    pr_description_with_model = f"{pr_description}\n\nModel: {model}"
                     pr_url = create_github_pr(branch_name, pr_description_with_model)
                     yield stream.event("complete", {
                         "pr_url": pr_url,
@@ -373,19 +378,19 @@ PR description should include:
                         "branch": branch_name,
                         "pr_description": pr_description_with_model
                     })
-                else:
-                    pr_url = f"local://{branch_name}"
-                    yield stream.event("complete", {
-                        "pr_url": pr_url,
-                        "message": "Local branch created successfully",
-                        "branch": branch_name,
-                        "pr_description": pr_description_with_model
-                    })
+            else:
+                pr_url = f"local://{branch_name}"
+                yield stream.event("complete", {
+                    "pr_url": pr_url,
+                    "message": "Local branch created successfully",
+                    "branch": branch_name,
+                    "pr_description": pr_description_with_model
+                })
 
         except Exception as e:
             logger.exception("Error processing request")
             if repo and original_branch:
-                cleanup_failed_operation(repo, original_branch, new_branch.name if new_branch else None)
+                cleanup_failed_operation(repo, original_branch, new_branch.name if new_branch else None, github_enabled)
             yield stream.event("error", {"message": str(e)})
 
     return Response(generate(), mimetype='text/event-stream')

@@ -24,6 +24,7 @@ GitIQ is an AI-powered pair programming tool that leverages Git as the primary i
 - **Reviewable PRs**: Generates PRs that can be reviewed and merged, fitting into standard code review processes.
 - **Flexible Configuration**: Supports multiple LLM providers and models through easy-to-edit configuration files.
 - **IDE Agnostic**: Works with any editor or IDE since changes flow through Git.
+- **GitHub Integration**: Optionally integrates with GitHub to automatically create Pull Requests.
 
 ## Quick Start
 
@@ -34,6 +35,7 @@ To get started with GitIQ, follow these steps:
 - **Python 3.7 or higher**: Ensure Python is installed on your system.
 - **Git**: Git must be installed and configured.
 - **OpenAI API Key**: An API key for OpenAI or other supported LLM providers.
+- **GitHub Access Token**: Required if you want to enable GitHub integration.
 
 ### Installation
 
@@ -114,6 +116,24 @@ Define the LLM API endpoints and their corresponding API keys. API keys are spec
 ```
 
 Define the available models, specifying which API to use, the model name, and any special flags like `nojson` for models that don't support JSON output.
+
+### GitHub Integration
+
+To enable GitHub integration, update the `config.json` file:
+
+```json
+"github": {
+  "enabled": true,
+  "access_token": "GITHUB_ACCESS_TOKEN",
+  "repo_owner": "your_github_username",
+  "repo_name": "your_repository_name"
+}
+```
+
+- **enabled**: Set to `true` to enable GitHub integration.
+- **access_token**: Your GitHub access token, stored as an environment variable.
+- **repo_owner**: The owner of the repository.
+- **repo_name**: The name of the repository.
 
 ## Usage
 

@@ -14,7 +14,6 @@ GitIQ is an AI-powered pair programming tool that leverages Git as the primary i
 - [Usage](#usage)
 - [Documentation](#documentation)
 - [Contributing](#contributing)
-- [License](#license)
 
 ## Features
 
@@ -132,6 +131,3 @@ For more detailed information, please refer to the following documents:
 
 We welcome contributions! Please read our [Style Guide](Style_Guide.md) before contributing to ensure consistency in the codebase. You can contribute by submitting Pull Requests, reporting issues, or suggesting new features.
 
-## License
-
-This project is licensed under the [MIT License](LICENSE).

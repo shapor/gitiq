@@ -11,6 +11,7 @@ GitIQ is an AI-powered pair programming tool that leverages Git as the primary i
   - [Git Configuration](#git-configuration)
   - [LLM API Configuration](#llm-api-configuration)
   - [Model Configuration](#model-configuration)
+  - [GitHub Integration](#github-integration)
 - [Usage](#usage)
 - [Documentation](#documentation)
 - [Contributing](#contributing)
@@ -134,6 +135,12 @@ To enable GitHub integration, update the `config.json` file:
 - **access_token**: Your GitHub access token, stored as an environment variable.
 - **repo_owner**: The owner of the repository.
 - **repo_name**: The name of the repository.
+
+**Note**: When GitHub integration is enabled, GitIQ will push the new branches to the remote repository (`origin`) to create Pull Requests. Ensure that:
+
+- You have the necessary permissions to push to the remote repository.
+- Your local repository is correctly connected to the remote via `origin`.
+- The remote repository URL is set appropriately in your local Git configuration.
 
 ## Usage
 

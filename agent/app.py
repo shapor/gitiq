@@ -130,8 +130,14 @@ def cleanup_failed_operation(repo, original_branch, new_branch_name):
     try:
         if original_branch:
             original_branch.checkout()
-        if new_branch_name in repo.heads:
+        if new_branch_name and new_branch_name in repo.heads:
             repo.delete_head(new_branch_name, force=True)
+        # Attempt to delete remote branch
+        try:
+            repo.git.push('origin', '--delete', new_branch_name)
+            logger.info(f"Deleted remote branch '{new_branch_name}' from remote 'origin'")
+        except Exception as e:
+            logger.warning(f"Failed to delete remote branch '{new_branch_name}': {str(e)}")
     except Exception as e:
         logger.error(f"Failed to cleanup: {str(e)}")
 
@@ -344,6 +350,17 @@ PR description should include:
                     committer=GIT_BOT
                 )
                 yield stream.event("info", {"message": "Changes committed"})
+
+            # Push changes to remote repository
+            with stream.stage("push_changes"):
+                try:
+                    repo.git.push('--set-upstream', 'origin', branch_name)
+                    yield stream.event("info", {"message": f"Branch '{branch_name}' pushed to remote 'origin'"})
+                except Exception as e:
+                    error_message = f"Failed to push branch '{branch_name}' to remote 'origin': {str(e)}"
+                    logger.error(error_message)
+                    yield stream.event("error", {"message": error_message})
+                    raise
 
             # Create PR
             with stream.stage("create_pr"):

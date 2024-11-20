@@ -29,9 +29,16 @@
                 </select>
             </div>
 
-            <div>
-                <label for="githubToggle">Create GitHub PR:</label>
-                <input type="checkbox" id="githubToggle" class="github-toggle" checked>
+            <div class="change-type-container">
+                <label for="changeTypeSlider">Change Type:</label>
+                <div class="slider-container">
+                    <span>Local Branch</span>
+                    <label class="switch">
+                        <input type="checkbox" id="changeTypeSlider">
+                        <span class="slider round"></span>
+                    </label>
+                    <span>GitHub PR</span>
+                </div>
             </div>
 
             <div>

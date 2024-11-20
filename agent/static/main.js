@@ -8,7 +8,7 @@ let isProcessing = false;
 const repoStatus = document.getElementById('repoStatus');
 const modelSelect = document.getElementById('modelSelect');
 const promptInput = document.getElementById('promptInput');
-const githubToggle = document.getElementById('githubToggle');
+const changeTypeSlider = document.getElementById('changeTypeSlider');
 const submitBtn = document.getElementById('submitBtn');
 const submitMessage = document.getElementById('submitMessage');
 const submitStatus = document.getElementById('submitStatus');
@@ -112,7 +112,7 @@ async function generatePR() {
         prompt: promptInput.value,
         selected_files: fileList.getSelectedFiles(),
         model: modelSelect.value,
-        github_enabled: githubToggle.checked
+        change_type: changeTypeSlider.checked ? 'github' : 'local'
     };
 
     const numFiles = body.selected_files.length;
@@ -250,8 +250,8 @@ promptInput.addEventListener('input', updateSubmitButton);
 fileList.setSelectionChangeHandler(updateSubmitButton);
 submitBtn.addEventListener('click', generatePR);
 
-githubToggle.addEventListener('change', () => {
-    // Any additional logic when toggling GitHub PR creation can be added here
+changeTypeSlider.addEventListener('change', () => {
+    // Any additional logic when toggling between Local Branch and GitHub PR can be added here
 });
 
 // Initialize

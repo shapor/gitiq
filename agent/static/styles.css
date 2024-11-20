@@ -328,3 +328,9 @@ input:checked + .slider:before {
 .slider.round:before {
     border-radius: 50%;
 }
+.model-and-change-type {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}

@@ -40,7 +40,7 @@ def create_github_pr(branch_name, pr_description):
             title=f"GitIQ: {branch_name}",
             body=pr_description,
             head=branch_name,
-            base="main"  # You might want to make this configurable
+            base="master"  # You might want to make this configurable
         )
         
         logger.info(f"Created GitHub PR: {pr.html_url}")

@@ -5,6 +5,7 @@ import os
 import json
 import time
 import logging
+import re
 from flask import Flask, request, jsonify, Response, send_from_directory
 from git import Repo, InvalidGitRepositoryError, Actor
 
@@ -120,6 +121,11 @@ def get_file_structure(repo_path="."):
 def generate_branch_name():
     """Generate default branch name with timestamp"""
     return f"GitIQ-{int(time.time())}"
+
+def is_valid_branch_name(name):
+    """Validate branch name according to Git naming conventions"""
+    branch_name_pattern = re.compile(r'^(?!/)(?!.*//)(?!.*/$)[\w\-.\/]+$')
+    return bool(branch_name_pattern.match(name)) and len(name) <= 50
 
 def cleanup_failed_operation(repo, original_branch, new_branch_name, change_type):
     """Clean up after failed operation"""
@@ -299,7 +305,7 @@ PR description should include:
 
                     generated_branch_name = branch_description_commit.get("branch_name", "").strip()
                     # Validate the generated branch name
-                    if len(generated_branch_name) > 50 or not generated_branch_name.replace("-", "_").isalnum():
+                    if not is_valid_branch_name(generated_branch_name):
                         error_message = f"Invalid branch name generated: {generated_branch_name}. Using fallback."
                         logger.error(error_message)
                         yield stream.event("error", {"message": error_message})

@@ -27,6 +27,7 @@
     "GPT-4o (with cache)": { "llm_api": "lmproxy", "name": "gpt-4o", "cost": [0.0025, 0.01], "max_output_tokens": 16384},
     "GPT-4o": { "llm_api": "openai", "name": "gpt-4o", "cost": [0.0025, 0.01], "max_output_tokens": 16384 },
     "GPT-4o Mini (with cache)": { "llm_api": "lmproxy", "name": "gpt-4o-mini", "cost": [0.00015, 0.0006], "max_output_tokens": 8192 },
+    "GPT-4o Mini": { "llm_api": "openai", "name": "gpt-4o-mini", "cost": [0.00015, 0.0006], "max_output_tokens": 8192 },
     "GPT-4 Turbo (with cache)": { "llm_api": "lmproxy", "name": "gpt-4-turbo", "cost": [0.01, 0.03], "max_output_tokens": 4096 },
     "GPT-4 Turbo": { "llm_api": "openai", "name": "gpt-4-turbo", "cost": [0.01, 0.03], "max_output_tokens": 4096 },
     "GPT-3.5 Turbo (with cache)": { "llm_api": "lmproxy", "name": "gpt-3.5-turbo-0125", "cost": [0.0015, 0.002], "max_output_tokens": 4000 },

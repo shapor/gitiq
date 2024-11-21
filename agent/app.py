@@ -380,32 +380,20 @@ PR description should include:
             # Create PR if change_type is 'github'
             if change_type == 'github':
                 with stream.stage("create_pr"):
-                    max_retries = 3
-                    retry_delay = 2  # seconds
-                    for attempt in range(1, max_retries + 1):
-                        try:
-                            pr_description_with_model = f"{pr_description}\n\nModel: {model}"
-                            pr_url = create_github_pr(branch_name, pr_description_with_model, base_branch)
-                            if pr_url:
-                                yield stream.event("complete", {
-                                    "pr_url": pr_url,
-                                    "message": "GitHub PR created successfully",
-                                    "branch": branch_name,
-                                    "pr_description": pr_description_with_model
-                                })
-                                break
-                            else:
-                                raise ValueError("Failed to create GitHub PR.")
-                        except Exception as e:
-                            logger.error(f"Attempt {attempt} - Failed to create GitHub PR: {str(e)}")
-                            if attempt < max_retries:
-                                yield stream.event("warning", {"message": f"Attempt {attempt} failed to create PR. Retrying in {retry_delay} seconds..."})
-                                time.sleep(retry_delay)
-                            else:
-                                error_message = "Failed to create GitHub PR after multiple attempts."
-                                logger.error(error_message)
-                                yield stream.event("error", {"message": error_message})
-                                # Optionally, you can choose to raise an error or proceed
+                    pr_description_with_model = f"{pr_description}\n\nModel: {model}"
+                    pr_url = create_github_pr(branch_name, pr_description_with_model, base_branch)
+                    if pr_url:
+                        yield stream.event("complete", {
+                            "pr_url": pr_url,
+                            "message": "GitHub PR created successfully",
+                            "branch": branch_name,
+                            "pr_description": pr_description_with_model
+                        })
+                    else:
+                        error_message = "Failed to create GitHub PR."
+                        logger.error(error_message)
+                        yield stream.event("error", {"message": error_message})
+                        # Optionally, you can choose to raise an error or proceed
             else:
                 pr_url = f"local://{branch_name}"
                 pr_description_with_model = f"{pr_description}\n\nModel: {model}"

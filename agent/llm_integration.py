@@ -125,7 +125,7 @@ def chat_completion(
         except (KeyError, IndexError) as e:
             error_message = response.get('error', {}).get('message', 'Unknown error')
             logger.error(f"Error accessing response content: {str(e)}: response = {response}")
-            raise ValueError(f"Invalid response format from OpenAI API: {error_message}")
+            raise ValueError(f"Error from OpenAI API: {error_message}")
         # Calculate cost in USD
         cost_total = calculate_cost(
             response['usage']['prompt_tokens'],

@@ -13,7 +13,7 @@ GitIQ is a new approach to AI pair programming that uses Git as the interface ra
 
 ## Core Workflow
 1. Developer describes desired changes in natural language
-2. GitIQ creates a semantically-named branch
+2. GitIQ creates a semantically-named branch with a unique timestamp
 3. AI makes changes across selected files
 4. Changes are committed with detailed messages including prompts and model metadata
 5. **Optional**: PR is created for review if GitHub integration is enabled
@@ -22,7 +22,7 @@ GitIQ is a new approach to AI pair programming that uses Git as the interface ra
 ## Requirements
 
 ### Git Integration
-- Creates feature branch with AI-generated semantic name (format: `GitIQ-{name}`)
+- Creates feature branch with AI-generated semantic name appended to 'GitIQ' and timestamp (format: `GitIQ-{generated_name}-{timestamp}`)
 - Sets git user.name and user.email for AI commits (configurable in config.json)
 - Commits changes with:
   - Original prompt as commit message
@@ -150,6 +150,13 @@ Users can now choose the type of change they want to create:
 - **GitHub PR**: The changes are pushed to a remote repository and a Pull Request is created on GitHub.
 
 This selection is made via a slider or toggle in the prompt interface.
+
+### Updated Branch Naming Convention
+GitIQ now simplifies the branch name creation logic:
+- The branch name starts with `GitIQ`
+- Attempts to append the AI-generated branch name (without `GitIQ-` prefix)
+- Always appends a timestamp to ensure uniqueness (format: `GitIQ-{generated_name}-{timestamp}`)
+- If no valid branch name is generated, it defaults to `GitIQ-{timestamp}`
 
 Questions for immediate implementation:
 1. Should we limit the number of context files for MVP?

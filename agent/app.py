@@ -117,13 +117,9 @@ def get_file_structure(repo_path="."):
     except InvalidGitRepositoryError:
         return []
 
-def generate_branch_name(summary):
-    """Generate a semantic branch name from the change summary"""
-    try:
-        return f"GitIQ-{int(time.time())}"
-    except Exception as e:
-        logger.error(f"Error generating branch name: {str(e)}")
-        return f"GitIQ-{int(time.time())}"
+def generate_branch_name():
+    """Generate default branch name with timestamp"""
+    return f"GitIQ-{int(time.time())}"
 
 def cleanup_failed_operation(repo, original_branch, new_branch_name, change_type):
     """Clean up after failed operation"""
@@ -248,16 +244,15 @@ Return ONLY a JSON object with the following structure, no additional next or co
                                 "role": "system",
                                 "content": """Return ONLY a JSON object with the following structure, no additional text or content before or after the JSON as follows, making sure the output is VALID JSON escaping newlines as \\n, etc:
 {
-  \"branch_name\": \"GitIQ-feature-name\",
+  \"branch_name\": \"feature-name\",
   \"pr_description\": \"Full PR description in markdown\",
   \"commit_message\": \"Commit message following best practices, first line summary (<72 chars), then blank line, then details\"
 }
 Branch name must:
-- Start with GitIQ-
 - Use only lowercase letters, numbers, hyphens, and underscores
 - Be descriptive of the changes made
 - Maximum 50 characters
-- Use snake_case for multiple words (e.g., GitIQ-update_auth_system)
+- Use snake_case for multiple words (e.g., update_auth_system)
 
 Commit message should:
 - Be in present tense
@@ -302,14 +297,18 @@ PR description should include:
                         logger.error(f"Bad branch/description/commit response: {str(branch_description_commit)}")
                         raise ValueError("Invalid response format from LLM")
 
-                    branch_name = branch_description_commit.get("branch_name", "")
-                    if not branch_name.startswith("GitIQ-") or len(branch_name) > 50 or not branch_name.replace("GitIQ-", "").replace("-", "_").replace("_", "").isalnum():
-                        error_message = f"Invalid branch name generated: {branch_name}. Using fallback."
+                    generated_branch_name = branch_description_commit.get("branch_name", "").strip()
+                    # Validate the generated branch name
+                    if len(generated_branch_name) > 50 or not generated_branch_name.replace("-", "_").isalnum():
+                        error_message = f"Invalid branch name generated: {generated_branch_name}. Using fallback."
                         logger.error(error_message)
                         yield stream.event("error", {"message": error_message})
-                        branch_name = generate_branch_name(summary)
+                        generated_branch_name = ""
                     else:
-                        yield stream.event("info", {"message": f"Generated branch name: {branch_name}"})
+                        yield stream.event("info", {"message": f"Generated branch name: {generated_branch_name}"})
+
+                    # Build the final branch name
+                    branch_name = f"GitIQ{('-' + generated_branch_name) if generated_branch_name else ''}-{int(time.time())}"
 
                     pr_description = branch_description_commit.get("pr_description", summary)
                     commit_message = branch_description_commit.get("commit_message", pr_description.split('\n')[0])
@@ -318,7 +317,7 @@ PR description should include:
                     error_message = f"Error generating branch name/description/commit message: {str(e)}. Using fallback."
                     logger.error(error_message)
                     yield stream.event("error", {"message": error_message})
-                    branch_name = generate_branch_name(summary)
+                    branch_name = generate_branch_name()
                     pr_description = f"## Changes\n{summary}"
                     commit_message = summary
 

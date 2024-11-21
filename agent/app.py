@@ -220,8 +220,9 @@ Return ONLY a JSON object with the following structure, no additional next or co
                 )
 
                 if not isinstance(changes_response, dict) or "changes" not in changes_response:
-                    logger.error(f"Bad changes response: {str(changes_response)}")
-                    raise ValueError("Invalid response format from LLM")
+                    error_message = changes_response if isinstance(changes_response, str) else "Invalid response format from LLM"
+                    logger.error(f"Bad changes response: {error_message}")
+                    raise ValueError(error_message)
 
                 changes = changes_response["changes"]
                 new_files = changes_response.get("new_files", {})

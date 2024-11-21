@@ -111,20 +111,21 @@ def chat_completion(
 
     if api_type == 'openai':
         _ensure_openai_configured(api_config['api_base'], os.getenv(api_config['api_key']))
-        response = openai.ChatCompletion.create(
-            model=model['name'],
-            messages=messages,
-            max_tokens=max_output_tokens,
-            n=1,
-            stop=None,
-            temperature=0.1,
-            **kwargs
-        )
         try:
+            response = openai.ChatCompletion.create(
+                model=model['name'],
+                messages=messages,
+                max_tokens=max_output_tokens,
+                n=1,
+                stop=None,
+                temperature=0.1,
+                **kwargs
+            )
             llm_output = response['choices'][0]['message']['content'].strip()
         except (KeyError, IndexError) as e:
-            logger.error(f"Error accessing response content: {str(e)}")
-            raise ValueError("Invalid response format from OpenAI API")
+            error_message = response.get('error', {}).get('message', 'Unknown error')
+            logger.error(f"Error accessing response content: {str(e)}: response = {response}")
+            raise ValueError(f"Invalid response format from OpenAI API: {error_message}")
         # Calculate cost in USD
         cost_total = calculate_cost(
             response['usage']['prompt_tokens'],

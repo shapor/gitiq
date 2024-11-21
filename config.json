@@ -5,7 +5,7 @@
     "email": "gitiq-bot@gmail.com"
   },
   "github": {
-    "enabled": false,
+    "enabled": true,
     "access_token": "GITHUB_ACCESS_TOKEN",
     "repo_owner": "edmundmae",
     "repo_name": "gitiq"

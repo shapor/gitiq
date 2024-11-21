@@ -405,9 +405,9 @@ PR description should include:
                     )
                     if pr_url:
                         yield stream.event("complete", {
-                            "pr_url": pr_url,
-                            "message": "GitHub PR created successfully",
+                            "message": f"GitHub PR created successfully: <a href=\"{pr_url}\" target=\"_blank\">{pr_title}</a>",
                             "branch": branch_name,
+                            "pr_url": pr_url,
                             "pr_title": pr_title,
                             "pr_description": pr_description_with_model
                         })
@@ -422,6 +422,7 @@ PR description should include:
                 pr_description_with_model = f"{pr_description}\n\nModel: {model}"
                 yield stream.event("complete", {
                     "pr_url": pr_url,
+                    "link_open": pr_url,
                     "message": "Local branch created successfully",
                     "branch": branch_name,
                     "pr_title": pr_title,

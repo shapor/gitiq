@@ -1,4 +1,3 @@
-
 """
 github_integration.py - GitHub API integration for GitIQ
 """
@@ -16,7 +15,7 @@ def load_github_config():
         config = json.load(f)
     return config.get('github', {})
 
-def create_github_pr(branch_name, pr_description, base_branch):
+def create_github_pr(pr_title, branch_name, pr_description, base_branch):
     """Create a GitHub Pull Request"""
     github_config = load_github_config()
     
@@ -38,7 +37,7 @@ def create_github_pr(branch_name, pr_description, base_branch):
         
         # Create pull request
         pr = repo.create_pull(
-            title=f"GitIQ: {branch_name}",
+            title=pr_title,
             body=pr_description,
             head=branch_name,
             base=base_branch  # Use the specified base_branch

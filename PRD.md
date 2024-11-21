@@ -30,6 +30,7 @@ GitIQ is a new approach to AI pair programming that uses Git as the interface ra
   - Includes LLM model name/version used
   - Optional: includes prompt tokens used and other metadata **(post-MVP)**
 - Optionally opens PR with:
+  - Uses AI-generated PR title (less restricted than branch names)
   - Original prompt as PR description
   - AI-generated summary of changes and their impact
   - Links to attached context files **(post-MVP)**
@@ -107,6 +108,11 @@ Files modified:
 - user_model.py
 ```
 
+### Example PR Title
+```
+Implement JWT-based Authentication System
+```
+
 ### Example PR Description Format
 ```
 ## Prompt
@@ -157,6 +163,11 @@ GitIQ now simplifies the branch name creation logic:
 - Attempts to append the AI-generated branch name (without `GitIQ-` prefix)
 - Always appends a timestamp to ensure uniqueness (format: `GitIQ-{generated_name}-{timestamp}`)
 - If no valid branch name is generated, it defaults to `GitIQ-{timestamp}`
+
+### Updated PR Title Generation
+- PR titles are now generated separately from branch names
+- PR titles are less restricted and can include spaces, capitalization, and special characters
+- Helps make PRs more readable and descriptive
 
 Questions for immediate implementation:
 1. Should we limit the number of context files for MVP?

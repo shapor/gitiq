@@ -1,4 +1,4 @@
-#"""
+"""
 app.py - Main Flask application for GitIQ
 """
 import os

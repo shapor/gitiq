@@ -171,7 +171,6 @@ def create_pr():
     selected_files = data.get('selected_files', [])
     context_files = data.get('context_files', [])
     model = data.get('model', 'gpt-4-turbo-preview')
-    change_type = data.get('change_type', 'github' if GITHUB_ENABLED else 'local')
     base_branch = data.get('base_branch', 'main')
 
     if not prompt or not selected_files:
@@ -179,6 +178,14 @@ def create_pr():
 
     def generate():
         stream = StreamProcessor()
+        change_type = data.get('change_type', 'github' if GITHUB_ENABLED else 'local')
+
+        if change_type == 'github' and not GITHUB_ENABLED:
+            message = "GitHub integration is not enabled; creating changes in local branch instead."
+            logger.warning(message)
+            yield stream.event('warning', {'message': message})
+            change_type = 'local'
+
         repo = None
         original_branch = None
         new_branch = None
@@ -376,12 +383,18 @@ PR description should include:
                 with stream.stage("create_pr"):
                     pr_description_with_model = f"{pr_description}\n\nModel: {model}"
                     pr_url = create_github_pr(branch_name, pr_description_with_model, base_branch)
-                    yield stream.event("complete", {
-                        "pr_url": pr_url,
-                        "message": "GitHub PR created successfully",
-                        "branch": branch_name,
-                        "pr_description": pr_description_with_model
-                    })
+                    if pr_url:
+                        yield stream.event("complete", {
+                            "pr_url": pr_url,
+                            "message": "GitHub PR created successfully",
+                            "branch": branch_name,
+                            "pr_description": pr_description_with_model
+                        })
+                    else:
+                        error_message = "Failed to create GitHub PR."
+                        logger.error(error_message)
+                        yield stream.event("error", {"message": error_message})
+                        # Optionally, you can choose to raise an error or proceed
             else:
                 pr_url = f"local://{branch_name}"
                 pr_description_with_model = f"{pr_description}\n\nModel: {model}"

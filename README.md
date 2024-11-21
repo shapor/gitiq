@@ -20,6 +20,7 @@ GitIQ is an AI-powered pair programming tool that leverages Git as the primary i
 
 - **Git Integration**: Uses Git as the primary interface, allowing for seamless integration into existing workflows.
 - **AI-Powered Code Changes**: Transforms natural language descriptions into code modifications in a local branch or a GitHub Pull Request.
+- **Flexible PR Titles**: Generates descriptive PR titles that are not restricted by branch naming conventions.
 - **Context Preservation**: Maintains a clear history of AI-human collaboration through Git commits.
 - **Multi-File Support**: Handles changes across multiple files as coherent units of work.
 - **Reviewable Changes**: Generates changes that can be reviewed and merged, fitting into standard code review processes.
@@ -144,7 +145,7 @@ To enable GitHub integration, update the `config.json` file:
 
 ## Usage
 
-Once the application is running, you can start using GitIQ to assist with your coding tasks. Describe the changes you want to make in natural language, select the **Change Type** (either **Local Branch** or **GitHub PR**), and GitIQ will generate the corresponding code changes. If you choose **Local Branch**, the changes will be committed to a new local branch. If you choose **GitHub PR**, GitIQ will push the branch to GitHub and create a Pull Request for your review.
+Once the application is running, you can start using GitIQ to assist with your coding tasks. Describe the changes you want to make in natural language, select the **Change Type** (either **Local Branch** or **GitHub PR**), and GitIQ will generate the corresponding code changes. If you choose **Local Branch**, the changes will be committed to a new local branch. If you choose **GitHub PR**, GitIQ will push the branch to GitHub and create a Pull Request with a descriptive title for your review.
 
 ## Documentation
 

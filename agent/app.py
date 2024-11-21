@@ -241,7 +241,7 @@ Return ONLY a JSON object with the following structure, no additional next or co
                 summary = changes_response.get("summary", "No summary provided")
                 yield stream.event("info", {"message": "Changes generated"})
 
-            # Generate branch name, commit message, and PR description based on the changes
+            # Generate branch name, PR title, commit message, and PR description based on the changes
             with stream.stage("generate_metadata"):
                 try:
                     branch_description_commit = stream.chat(
@@ -251,6 +251,7 @@ Return ONLY a JSON object with the following structure, no additional next or co
                                 "content": """Return ONLY a JSON object with the following structure, no additional text or content before or after the JSON as follows, making sure the output is VALID JSON escaping newlines as \\n, etc:
 {
   \"branch_name\": \"feature-name\",
+  \"pr_title\": \"Descriptive PR title\",
   \"pr_description\": \"Full PR description in markdown\",
   \"commit_message\": \"Commit message following best practices, first line summary (<72 chars), then blank line, then details\"
 }
@@ -259,6 +260,12 @@ Branch name must:
 - Be descriptive of the changes made
 - Maximum 50 characters
 - Use snake_case for multiple words (e.g., update_auth_system)
+
+PR title should:
+- Be descriptive and concise
+- Use spaces and capitalization as appropriate
+- Not have the same restrictions as branch names
+- Should not exceed 72 characters
 
 Commit message should:
 - Be in present tense
@@ -316,6 +323,8 @@ PR description should include:
                     # Build the final branch name
                     branch_name = f"GitIQ{('-' + generated_branch_name) if generated_branch_name else ''}-{int(time.time())}"
 
+                    pr_title = branch_description_commit.get("pr_title", f"GitIQ: {generated_branch_name if generated_branch_name else branch_name}")
+
                     pr_description = branch_description_commit.get("pr_description", summary)
                     commit_message = branch_description_commit.get("commit_message", pr_description.split('\n')[0])
 
@@ -324,6 +333,7 @@ PR description should include:
                     logger.error(error_message)
                     yield stream.event("error", {"message": error_message})
                     branch_name = generate_branch_name()
+                    pr_title = f"GitIQ: {branch_name}"
                     pr_description = f"## Changes\n{summary}"
                     commit_message = summary
 
@@ -387,12 +397,18 @@ PR description should include:
             if change_type == 'github':
                 with stream.stage("create_pr"):
                     pr_description_with_model = f"{pr_description}\n\nModel: {model}"
-                    pr_url = create_github_pr(branch_name, pr_description_with_model, base_branch)
+                    pr_url = create_github_pr(
+                        pr_title,
+                        branch_name,
+                        pr_description_with_model,
+                        base_branch
+                    )
                     if pr_url:
                         yield stream.event("complete", {
                             "pr_url": pr_url,
                             "message": "GitHub PR created successfully",
                             "branch": branch_name,
+                            "pr_title": pr_title,
                             "pr_description": pr_description_with_model
                         })
                     else:
@@ -402,11 +418,13 @@ PR description should include:
                         # Optionally, you can choose to raise an error or proceed
             else:
                 pr_url = f"local://{branch_name}"
+                pr_title = f"GitIQ: {generated_branch_name if generated_branch_name else branch_name}"
                 pr_description_with_model = f"{pr_description}\n\nModel: {model}"
                 yield stream.event("complete", {
                     "pr_url": pr_url,
                     "message": "Local branch created successfully",
                     "branch": branch_name,
+                    "pr_title": pr_title,
                     "pr_description": pr_description_with_model
                 })
 

@@ -126,12 +126,14 @@ def generate_branch_name(summary):
         return f"GitIQ-{int(time.time())}"
 
 def cleanup_failed_operation(repo, original_branch, new_branch_name, change_type):
-    """Clean up after failed PR creation"""
+    """Clean up after failed operation"""
     try:
         if original_branch:
             original_branch.checkout()
+        # Only delete local branch if change_type is 'local'
         if new_branch_name and new_branch_name in repo.heads:
-            repo.delete_head(new_branch_name, force=True)
+            if change_type == 'local':
+                repo.delete_head(new_branch_name, force=True)
         # Attempt to delete remote branch if change_type is 'github'
         if change_type == 'github':
             try:

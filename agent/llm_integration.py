@@ -120,17 +120,21 @@ def chat_completion(
             temperature=0.1,
             **kwargs
         )
-        llm_output = response.choices[0].message.content.strip()
+        try:
+            llm_output = response['choices'][0]['message']['content'].strip()
+        except (KeyError, IndexError) as e:
+            logger.error(f"Error accessing response content: {str(e)}")
+            raise ValueError("Invalid response format from OpenAI API")
         # Calculate cost in USD
         cost_total = calculate_cost(
-            response.usage.prompt_tokens,
-            response.usage.completion_tokens,
+            response['usage']['prompt_tokens'],
+            response['usage']['completion_tokens'],
             model_name
         )
         usage = {
-            "prompt_tokens": response.usage.prompt_tokens,
-            "completion_tokens": response.usage.completion_tokens,
-            "total_tokens": response.usage.total_tokens,
+            "prompt_tokens": response['usage']['prompt_tokens'],
+            "completion_tokens": response['usage']['completion_tokens'],
+            "total_tokens": response['usage']['total_tokens'],
             "cost": cost_total
         }
 

@@ -1,4 +1,4 @@
-"""
+#"""
 app.py - Main Flask application for GitIQ
 """
 import os
@@ -170,6 +170,7 @@ def create_pr():
     context_files = data.get('context_files', [])
     model = data.get('model', 'gpt-4-turbo-preview')
     change_type = data.get('change_type', 'github' if GITHUB_ENABLED else 'local')
+    base_branch = data.get('base_branch', 'main')
 
     if not prompt or not selected_files:
         return jsonify({"type": "error", "message": "Missing required fields"}), 400
@@ -372,7 +373,7 @@ PR description should include:
             if change_type == 'github':
                 with stream.stage("create_pr"):
                     pr_description_with_model = f"{pr_description}\n\nModel: {model}"
-                    pr_url = create_github_pr(branch_name, pr_description_with_model)
+                    pr_url = create_github_pr(branch_name, pr_description_with_model, base_branch)
                     yield stream.event("complete", {
                         "pr_url": pr_url,
                         "message": "GitHub PR created successfully",
@@ -396,6 +397,51 @@ PR description should include:
             yield stream.event("error", {"message": str(e)})
 
     return Response(generate(), mimetype='text/event-stream')
+
+@app.route('/api/repo/branches')
+def repo_branches():
+    """Get list of local and remote branches."""
+    try:
+        repo = Repo(os.getcwd())
+        current_branch = repo.active_branch.name
+
+        local_branches = [head.name for head in repo.heads]
+        remote_branches = [ref.name for ref in repo.remotes.origin.refs]
+
+        return jsonify({
+            "current_branch": current_branch,
+            "local_branches": local_branches,
+            "remote_branches": remote_branches
+        })
+    except Exception as e:
+        logger.error(f"Error getting branches: {str(e)}")
+        return jsonify({"type": "error", "message": str(e)}), 500
+
+@app.route('/api/repo/switch-branch', methods=['POST'])
+def switch_branch():
+    """Switch to a different local branch."""
+    data = request.json
+    branch_name = data.get('branch')
+
+    if not branch_name:
+        return jsonify({"type": "error", "message": "Missing 'branch' parameter"}), 400
+
+    try:
+        repo = Repo(os.getcwd())
+
+        if repo.is_dirty(untracked_files=True):
+            return jsonify({"type": "error", "message": "Cannot switch branches with uncommitted changes"}), 400
+
+        if branch_name not in [head.name for head in repo.heads]:
+            return jsonify({"type": "error", "message": f"Branch '{branch_name}' does not exist"}), 400
+
+        repo.git.checkout(branch_name)
+        current_branch = repo.active_branch.name
+
+        return jsonify({"type": "complete", "message": f"Switched to branch {branch_name}", "current_branch": current_branch})
+    except Exception as e:
+        logger.error(f"Error switching branches: {str(e)}")
+        return jsonify({"type": "error", "message": str(e)}), 500
 
 if __name__ == '__main__':
     app.run(debug=False, host='0.0.0.0', port=int(os.environ.get('PORT', 5500)))

@@ -16,6 +16,14 @@ const loading = document.getElementById('loading');
 const currentStage = document.getElementById('currentStage');
 const stageTiming = document.getElementById('stageTiming');
 const logSection = document.getElementById('logSection');
+const branchSelect = document.getElementById('branchSelect');
+const branchSelectLabel = document.getElementById('branchSelectLabel');
+
+let branches = {
+    current_branch: '',
+    local_branches: [],
+    remote_branches: []
+};
 
 function setStatusSpinner() {
     submitStatus.innerHTML = '<span class="spinner"></span>';
@@ -112,7 +120,8 @@ async function generatePR() {
         prompt: promptInput.value,
         selected_files: fileList.getSelectedFiles(),
         model: modelSelect.value,
-        change_type: changeTypeSlider.checked ? 'github' : 'local'
+        change_type: changeTypeSlider.checked ? 'github' : 'local',
+        base_branch: changeTypeSlider.checked ? branchSelect.value.replace('origin/', '') : undefined
     };
 
     const numFiles = body.selected_files.length;
@@ -172,6 +181,7 @@ async function generatePR() {
         stageTiming.textContent = '';
         updateSubmitButton();
         await fileList.load();
+        await loadBranches();
     }
 }
 
@@ -243,6 +253,61 @@ function handleCompletion(event) {
         addLogEntry(statsMessage, 'stats');
     }
     setStatusSuccess();
+    loadBranches();
+}
+
+async function loadBranches() {
+    try {
+        const response = await fetch('/api/repo/branches');
+        branches = await response.json();
+        populateBranchSelect();
+    } catch (error) {
+        addLogEntry(`Error loading branches: ${error.message}`, 'error');
+    }
+}
+
+function populateBranchSelect() {
+    const mode = changeTypeSlider.checked ? 'github' : 'local';
+    let branchOptions = [];
+    if (mode === 'local') {
+        branchSelectLabel.textContent = 'Working Branch:';
+        branchOptions = branches.local_branches;
+        branchSelect.innerHTML = branchOptions.map(branch => 
+            `<option value="${branch}">${branch}</option>`
+        ).join('');
+        branchSelect.value = branches.current_branch;
+    } else {
+        branchSelectLabel.textContent = 'Target Branch:';
+        branchOptions = branches.remote_branches;
+        branchSelect.innerHTML = branchOptions.map(branch => 
+            `<option value="${branch}">${branch}</option>`
+        ).join('');
+        branchSelect.value = branchOptions[0];
+    }
+}
+
+async function switchBranch() {
+    const selectedBranch = branchSelect.value;
+    try {
+        const response = await fetch('/api/repo/switch-branch', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ branch: selectedBranch })
+        });
+        const result = await response.json();
+        if (result.type === 'complete') {
+            addLogEntry(result.message, 'success');
+            await fileList.load();
+            await checkRepoStatus();
+            await loadBranches();
+        } else {
+            throw new Error(result.message);
+        }
+    } catch (error) {
+        addLogEntry(`Error switching branch: ${error.message}`, 'error');
+        // Reset to previous selection
+        branchSelect.value = branches.current_branch;
+    }
 }
 
 // Event listeners
@@ -251,7 +316,13 @@ fileList.setSelectionChangeHandler(updateSubmitButton);
 submitBtn.addEventListener('click', generatePR);
 
 changeTypeSlider.addEventListener('change', () => {
-    // Any additional logic when toggling between Local Branch and GitHub PR can be added here
+    populateBranchSelect();
+});
+
+branchSelect.addEventListener('change', () => {
+    if (!changeTypeSlider.checked) {
+        switchBranch();
+    }
 });
 
 // Initialize
@@ -260,7 +331,8 @@ async function initialize() {
     if (repoOk) {
         await Promise.all([
             fileList.load(),
-            loadModels()
+            loadModels(),
+            loadBranches()
         ]);
     }
     addLogEntry('GitIQ initialized successfully', 'info');

@@ -207,8 +207,10 @@ def create_pr():
                     messages=[
                         {
                             "role": "system",
-                            "content": """Generate changes for the specified files based on the prompt.  You need to return the ENTIRE updated file(s).  Follow the style guide and don't make another other changes, removing comments, etc.
-Return ONLY a JSON object with the following structure, no additional next or content before or after the JSON as follows, making sure the output is VALID JSON escaping newlines as \\n, etc:
+                            "content": """Generate changes for the specified files based on the prompt. You need to return the ENTIRE updated file(s). Follow the style guide and don't make another other changes, removing comments, etc.
+* Do NOT add comments like \" # Rest of the functions remain the same ... \"
+* Do NOT remove unrelated comments in the code
+Return ONLY a JSON object with the following structure, no additional next or content before or after the JSON as follows, making sure the output is VALID JSON escaping newlines as \\\\n, etc:
 {
   \"changes\": {
     \"file_path.txt\": \"new_content based on 'Requested changes' user prompt\",
@@ -248,7 +250,7 @@ Return ONLY a JSON object with the following structure, no additional next or co
                         messages=[
                             {
                                 "role": "system",
-                                "content": """Return ONLY a JSON object with the following structure, no additional text or content before or after the JSON as follows, making sure the output is VALID JSON escaping newlines as \\n, etc:
+                                "content": """Return ONLY a JSON object with the following structure, no additional text or content before or after the JSON as follows, making sure the output is VALID JSON escaping newlines as \\\\n, etc:
 {
   \"branch_name\": \"feature-name\",
   \"pr_title\": \"Descriptive PR title\",

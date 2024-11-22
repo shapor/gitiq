@@ -23,15 +23,15 @@
 
         <div class="prompt-section">
             <div class="model-and-change-type">
-                <div>
+                <div class="input-group">
                     <label for="modelSelect">Model:</label>
                     <select id="modelSelect" class="model-select">
                         <!-- Models will be populated here -->
                     </select>
                 </div>
 
-                <div class="change-type-container">
-                    <label for="changeTypeSlider">Change Type:</label>
+                <div class="input-group">
+                    <label>Change Type:</label>
                     <div class="slider-container">
                         <span>Local Branch</span>
                         <label class="switch">
@@ -40,13 +40,13 @@
                         </label>
                         <span>GitHub PR</span>
                     </div>
-                    <!-- Updated branch selector -->
-                    <div class="branch-selector">
-                        <label for="branchSelect" id="branchSelectLabel">Base Branch:</label>
-                        <select id="branchSelect" class="branch-select">
-                            <!-- Options populated by JavaScript -->
-                        </select>
-                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label for="branchSelect">Base Branch:</label>
+                    <select id="branchSelect" class="branch-select">
+                        <!-- Options populated by JavaScript -->
+                    </select>
                 </div>
             </div>
 

@@ -17,7 +17,6 @@ const currentStage = document.getElementById('currentStage');
 const stageTiming = document.getElementById('stageTiming');
 const logSection = document.getElementById('logSection');
 const branchSelect = document.getElementById('branchSelect');
-const branchSelectLabel = document.getElementById('branchSelectLabel');
 
 let branches = {
     current_branch: '',
@@ -267,15 +266,19 @@ async function loadBranches() {
 }
 
 function populateBranchSelect() {
-    branchSelectLabel.textContent = 'Base Branch:';
     const branchOptions = branches.remote_branches;
     branchSelect.innerHTML = branchOptions.map(branch => 
         `<option value="${branch}">${branch}</option>`
     ).join('');
     branchSelect.value = branchOptions[0] || '';
+    updateBranchSelectState();
 }
 
-// Removed switchBranch function and associated event listener
+function updateBranchSelectState() {
+    const isLocalBranch = !changeTypeSlider.checked;
+    branchSelect.disabled = isLocalBranch;
+    branchSelect.style.opacity = isLocalBranch ? '0.5' : '1';
+}
 
 // Event listeners
 promptInput.addEventListener('input', updateSubmitButton);
@@ -283,8 +286,7 @@ fileList.setSelectionChangeHandler(updateSubmitButton);
 submitBtn.addEventListener('click', generatePR);
 
 changeTypeSlider.addEventListener('change', () => {
-    populateBranchSelect();
-    // Removed branch switching logic
+    updateBranchSelectState();
 });
 
 // Initialize
@@ -297,6 +299,7 @@ async function initialize() {
             loadBranches()
         ]);
     }
+    updateBranchSelectState();
     addLogEntry('GitIQ initialized successfully', 'info');
 }
 

@@ -46,11 +46,27 @@ body {
     font-family: inherit;
     resize: vertical;
 }
-.model-select {
+.model-and-change-type {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 20px;
+}
+.input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+.input-group label {
+    font-weight: bold;
+}
+.model-select,
+.branch-select {
     padding: 8px;
     border: 1px solid #ddd;
     border-radius: 4px;
     width: 200px;
+    font-size: 14px;
 }
 .submit-container {
     display: flex;
@@ -266,17 +282,6 @@ th.sortable {
     color: #666;
     margin-left: 10px;
 }
-.model-and-change-type {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
-}
-.change-type-container {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-}
 .slider-container {
     display: flex;
     align-items: center;
@@ -328,17 +333,4 @@ input:checked + .slider:before {
 }
 .slider.round:before {
     border-radius: 50%;
-}
-.branch-selector {
-    margin-left: 1rem;
-    display: inline-flex;
-    align-items: center;
-}
-
-.branch-select {
-    margin-left: 0.5rem;
-    padding: 0.25rem 0.5rem;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    min-width: 200px;
 }

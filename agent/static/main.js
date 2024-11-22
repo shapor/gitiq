@@ -267,48 +267,15 @@ async function loadBranches() {
 }
 
 function populateBranchSelect() {
-    const mode = changeTypeSlider.checked ? 'github' : 'local';
-    let branchOptions = [];
-    if (mode === 'local') {
-        branchSelectLabel.textContent = 'Working Branch:';
-        branchOptions = branches.local_branches;
-        branchSelect.innerHTML = branchOptions.map(branch => 
-            `<option value="${branch}">${branch}</option>`
-        ).join('');
-        branchSelect.value = branches.current_branch;
-    } else {
-        branchSelectLabel.textContent = 'Target Branch:';
-        branchOptions = branches.remote_branches;
-        branchSelect.innerHTML = branchOptions.map(branch => 
-            `<option value="${branch}">${branch}</option>`
-        ).join('');
-        branchSelect.value = branchOptions[0];
-    }
+    branchSelectLabel.textContent = 'Base Branch:';
+    const branchOptions = branches.remote_branches;
+    branchSelect.innerHTML = branchOptions.map(branch => 
+        `<option value="${branch}">${branch}</option>`
+    ).join('');
+    branchSelect.value = branchOptions[0] || '';
 }
 
-async function switchBranch() {
-    const selectedBranch = branchSelect.value;
-    try {
-        const response = await fetch('/api/repo/switch-branch', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ branch: selectedBranch })
-        });
-        const result = await response.json();
-        if (result.type === 'complete') {
-            addLogEntry(result.message, 'success');
-            await fileList.load();
-            await checkRepoStatus();
-            await loadBranches();
-        } else {
-            throw new Error(result.message);
-        }
-    } catch (error) {
-        addLogEntry(`Error switching branch: ${error.message}`, 'error');
-        // Reset to previous selection
-        branchSelect.value = branches.current_branch;
-    }
-}
+// Removed switchBranch function and associated event listener
 
 // Event listeners
 promptInput.addEventListener('input', updateSubmitButton);
@@ -317,12 +284,7 @@ submitBtn.addEventListener('click', generatePR);
 
 changeTypeSlider.addEventListener('change', () => {
     populateBranchSelect();
-});
-
-branchSelect.addEventListener('change', () => {
-    if (!changeTypeSlider.checked) {
-        switchBranch();
-    }
+    // Removed branch switching logic
 });
 
 // Initialize

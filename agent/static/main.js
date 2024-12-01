@@ -266,7 +266,7 @@ async function loadBranches() {
 }
 
 function populateBranchSelect() {
-    const branchOptions = branches.remote_branches;
+    const branchOptions = branches.remote_branches || [];
     branchSelect.innerHTML = branchOptions.map(branch => 
         `<option value="${branch}">${branch}</option>`
     ).join('');
@@ -275,9 +275,12 @@ function populateBranchSelect() {
 }
 
 function updateBranchSelectState() {
+    const hasRemoteBranches = (branches.remote_branches || []).length > 0;
     const isLocalBranch = !changeTypeSlider.checked;
-    branchSelect.disabled = isLocalBranch;
-    branchSelect.style.opacity = isLocalBranch ? '0.5' : '1';
+    branchSelect.disabled = isLocalBranch || !hasRemoteBranches;
+    branchSelect.style.opacity = (isLocalBranch || !hasRemoteBranches) ? '0.5' : '1';
+    changeTypeSlider.disabled = !hasRemoteBranches;
+    changeTypeSlider.style.opacity = hasRemoteBranches ? '1' : '0.5';
 }
 
 // Event listeners

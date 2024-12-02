@@ -335,3 +335,16 @@ input:checked + .slider:before {
 .slider.round:before {
     border-radius: 50%;
 }
+
+/* New Styles for Extension Filters */
+.extension-filters {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 10px;
+}
+.extension-filters label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 14px;
+}

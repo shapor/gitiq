@@ -9,6 +9,11 @@ function FileList(containerId) {
     const selectAllCheckbox = document.getElementById('selectAll');
     selectAllCheckbox.addEventListener('change', handleSelectAll);
 
+    const extensionCheckboxes = container.querySelectorAll('.extension-checkbox');
+    extensionCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', handleExtensionChange);
+    });
+
     function handleSelectAll() {
         const checkboxes = container.querySelectorAll('tbody input[type="checkbox"]');
         checkboxes.forEach(checkbox => {
@@ -17,6 +22,19 @@ function FileList(containerId) {
         });
         updateTokenCount();
         notifySelectionChange();
+    }
+
+    function handleExtensionChange(event) {
+        const extension = event.target.getAttribute('data-extension');
+        const isChecked = event.target.checked;
+        const checkboxes = container.querySelectorAll(`tbody input[type="checkbox"][data-extension="${extension}"]`);
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = isChecked;
+            updateSelectedFiles(checkbox);
+        });
+        updateTokenCount();
+        notifySelectionChange();
+        updateSelectAllCheckbox();
     }
 
     function updateSelectedFiles(checkbox) {
@@ -132,9 +150,14 @@ function FileList(containerId) {
         checkbox.type = 'checkbox';
         checkbox.checked = selectedFiles.has(file.path);
         checkbox.dataset.filePath = file.path;
+        checkbox.dataset.extension = getFileExtension(file.path);
         checkbox.addEventListener('change', handleCheckboxChange);
         cell.appendChild(checkbox);
         return cell;
+    }
+
+    function getFileExtension(filePath) {
+        return filePath.split('.').pop().toLowerCase();
     }
 
     function handleCheckboxChange(e) {

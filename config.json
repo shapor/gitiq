@@ -21,6 +21,7 @@
     "openrouter": { "api_base": "https://openrouter.ai/api/v1", "api_key": "OPENROUTER_API_KEY" }
   },
   "models": {
+    "Claude 3.5 Sonnet (latest)": { "llm_api": "claude", "name": "claude-3-5-sonnet-20241022", "nojson": true, "max_output_tokens": 8192, "cost": [0.003, 0.015] },
     "Claude 3.5 Sonnet": { "llm_api": "claude", "name": "claude-3-5-sonnet-20240620", "nojson": true, "max_output_tokens": 8192, "cost": [0.003, 0.015] },
     "OpenAI o1-preview (via OpenRouter)": { "llm_api": "openrouter", "name": "openai/o1-preview", "max_output_tokens": 32768, "cost": [0.015, 0.06] },
     "OpenAI o1-mini (via OpenRouter)": { "llm_api": "openrouter", "name": "openai/o1-mini", "max_output_tokens": 65536, "cost": [0.003, 0.012] },

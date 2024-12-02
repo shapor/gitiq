@@ -9,11 +9,6 @@ function FileList(containerId) {
     const selectAllCheckbox = document.getElementById('selectAll');
     selectAllCheckbox.addEventListener('change', handleSelectAll);
 
-    const extensionCheckboxes = container.querySelectorAll('.extension-checkbox');
-    extensionCheckboxes.forEach(checkbox => {
-        checkbox.addEventListener('change', handleExtensionChange);
-    });
-
     function handleSelectAll() {
         const checkboxes = container.querySelectorAll('tbody input[type="checkbox"]');
         checkboxes.forEach(checkbox => {
@@ -77,17 +72,30 @@ function FileList(containerId) {
             const response = await fetch('/api/files');
             filesData = await response.json();
             renderFileTable();
+            renderExtensionCheckboxes();
         } catch (error) {
             container.querySelector('tbody').innerHTML = 
                 `<tr><td colspan="6" class="error">Error loading files: ${error.message}</td></tr>`;
         }
     }
 
-    function renderFileTable() {
-        const tbody = container.querySelector('tbody');
-        tbody.innerHTML = '';
-        const sortedFiles = sortFiles(filesData);
-        sortedFiles.forEach(file => renderFileRow(file, tbody));
+    function renderExtensionCheckboxes() {
+        const extensionContainer = document.getElementById('extensionFilters');
+        extensionContainer.innerHTML = ''; // Clear existing checkboxes
+
+        const uniqueExtensions = [...new Set(filesData.map(file => getFileExtension(file.path)))].sort();
+        uniqueExtensions.forEach(ext => {
+            const label = document.createElement('label');
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.classList.add('extension-checkbox');
+            checkbox.dataset.extension = ext;
+            checkbox.checked = true;
+            checkbox.addEventListener('change', handleExtensionChange);
+            label.appendChild(checkbox);
+            label.appendChild(document.createTextNode(ext));
+            extensionContainer.appendChild(label);
+        });
     }
 
     function sortFiles(files) {
@@ -100,6 +108,13 @@ function FileList(containerId) {
             if (valA > valB) return currentSortOrder === 'asc' ? 1 : -1;
             return 0;
         });
+    }
+
+    function renderFileTable() {
+        const tbody = container.querySelector('tbody');
+        tbody.innerHTML = '';
+        const sortedFiles = sortFiles(filesData);
+        sortedFiles.forEach(file => renderFileRow(file, tbody));
     }
 
     function renderFileRow(file, tbody) {

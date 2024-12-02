@@ -8,7 +8,7 @@ let isProcessing = false;
 const repoStatus = document.getElementById('repoStatus');
 const modelSelect = document.getElementById('modelSelect');
 const promptInput = document.getElementById('promptInput');
-const changeTypeSelect = document.getElementById('changeTypeSelect');
+const changeTypeSlider = document.getElementById('changeTypeSlider');
 const submitBtn = document.getElementById('submitBtn');
 const submitMessage = document.getElementById('submitMessage');
 const submitStatus = document.getElementById('submitStatus');
@@ -115,13 +115,12 @@ async function generatePR() {
     submitBtn.disabled = true;
     setStatusSpinner();
     
-    const selectedChangeType = changeTypeSelect.value;
     const body = {
         prompt: promptInput.value,
         selected_files: fileList.getSelectedFiles(),
         model: modelSelect.value,
-        change_type: selectedChangeType,
-        base_branch: selectedChangeType === 'github' ? branchSelect.value.replace('origin/', '') : undefined
+        change_type: changeTypeSlider.checked ? 'github' : 'local',
+        base_branch: changeTypeSlider.checked ? branchSelect.value.replace('origin/', '') : undefined
     };
 
     const numFiles = body.selected_files.length;
@@ -276,12 +275,12 @@ function populateBranchSelect() {
 }
 
 function updateBranchSelectState() {
-    const selectedChangeType = changeTypeSelect.value;
-    const isGitHubPR = selectedChangeType === 'github';
     const hasRemoteBranches = (branches.remote_branches || []).length > 0;
-
-    branchSelect.disabled = !isGitHubPR || !hasRemoteBranches;
-    branchSelect.style.opacity = (!isGitHubPR || !hasRemoteBranches) ? '0.5' : '1';
+    const isLocalBranch = !changeTypeSlider.checked;
+    branchSelect.disabled = isLocalBranch || !hasRemoteBranches;
+    branchSelect.style.opacity = (isLocalBranch || !hasRemoteBranches) ? '0.5' : '1';
+    changeTypeSlider.disabled = !hasRemoteBranches;
+    changeTypeSlider.style.opacity = hasRemoteBranches ? '1' : '0.5';
 }
 
 // Event listeners
@@ -289,9 +288,8 @@ promptInput.addEventListener('input', updateSubmitButton);
 fileList.setSelectionChangeHandler(updateSubmitButton);
 submitBtn.addEventListener('click', generatePR);
 
-changeTypeSelect.addEventListener('change', () => {
+changeTypeSlider.addEventListener('change', () => {
     updateBranchSelectState();
-    updateSubmitButton();
 });
 
 // Initialize

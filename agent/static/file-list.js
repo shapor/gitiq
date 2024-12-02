@@ -11,7 +11,7 @@ function FileList(containerId) {
 
     function handleSelectAll() {
         const checkboxes = container.querySelectorAll('tbody input[type="checkbox"]');
-        checkboxes.forEach(checkbox => {
+        checkboxe.forEach(checkbox => {
             checkbox.checked = selectAllCheckbox.checked;
             updateSelectedFiles(checkbox);
         });
@@ -90,7 +90,7 @@ function FileList(containerId) {
             checkbox.type = 'checkbox';
             checkbox.classList.add('extension-checkbox');
             checkbox.dataset.extension = ext;
-            checkbox.checked = true;
+            checkbox.checked = false;
             checkbox.addEventListener('change', handleExtensionChange);
             label.appendChild(checkbox);
             label.appendChild(document.createTextNode(ext));

@@ -31,15 +31,12 @@
                 </div>
 
                 <div class="input-group">
-                    <label>Change Type:</label>
-                    <div class="slider-container">
-                        <span>Local Branch</span>
-                        <label class="switch">
-                            <input type="checkbox" id="changeTypeSlider">
-                            <span class="slider round"></span>
-                        </label>
-                        <span>GitHub PR</span>
-                    </div>
+                    <label for="changeTypeSelect">Change Type:</label>
+                    <select id="changeTypeSelect" class="change-type-select">
+                        <option value="current">Current Branch</option>
+                        <option value="local">New Local Branch</option>
+                        <option value="github">GitHub PR</option>
+                    </select>
                 </div>
 
                 <div class="input-group">

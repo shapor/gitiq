@@ -11,12 +11,13 @@ function FileList(containerId) {
 
     function handleSelectAll() {
         const checkboxes = container.querySelectorAll('tbody input[type="checkbox"]');
-        checkboxe.forEach(checkbox => {
+        checkboxes.forEach(checkbox => {
             checkbox.checked = selectAllCheckbox.checked;
             updateSelectedFiles(checkbox);
         });
         updateTokenCount();
         notifySelectionChange();
+        updateExtensionCheckboxes();
     }
 
     function handleExtensionChange(event) {
@@ -65,6 +66,28 @@ function FileList(containerId) {
         
         const tokenCounter = document.getElementById('tokenCount');
         tokenCounter.textContent = `(${tokenSum} tokens selected)`;
+    }
+
+    function updateExtensionCheckboxes() {
+        const extensionContainer = document.getElementById('extensionFilters');
+        const extensionCheckboxes = extensionContainer.querySelectorAll('input[type="checkbox"]');
+        
+        extensionCheckboxes.forEach(extCheckbox => {
+            const extension = extCheckbox.dataset.extension;
+            const fileCheckboxes = container.querySelectorAll(`tbody input[type="checkbox"][data-extension="${extension}"]`);
+            const checkedCount = Array.from(fileCheckboxes).filter(cb => cb.checked).length;
+            
+            if (checkedCount === 0) {
+                extCheckbox.checked = false;
+                extCheckbox.indeterminate = false;
+            } else if (checkedCount === fileCheckboxes.length) {
+                extCheckbox.checked = true;
+                extCheckbox.indeterminate = false;
+            } else {
+                extCheckbox.checked = false;
+                extCheckbox.indeterminate = true;
+            }
+        });
     }
 
     async function loadFileStructure() {
@@ -181,12 +204,23 @@ function FileList(containerId) {
         updateTokenCount();
         notifySelectionChange();
         updateSelectAllCheckbox();
+        updateExtensionCheckboxes();
     }
 
     function updateSelectAllCheckbox() {
         const totalCheckboxes = container.querySelectorAll('tbody input[type="checkbox"]').length;
         const checkedCheckboxes = container.querySelectorAll('tbody input[type="checkbox"]:checked').length;
-        selectAllCheckbox.checked = (totalCheckboxes === checkedCheckboxes);
+        
+        if (checkedCheckboxes === 0) {
+            selectAllCheckbox.checked = false;
+            selectAllCheckbox.indeterminate = false;
+        } else if (checkedCheckboxes === totalCheckboxes) {
+            selectAllCheckbox.checked = true;
+            selectAllCheckbox.indeterminate = false;
+        } else {
+            selectAllCheckbox.checked = false;
+            selectAllCheckbox.indeterminate = true;
+        }
     }
 
     function createExpandButtonCell(file, row) {

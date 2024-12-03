@@ -104,9 +104,11 @@ function FileList(containerId) {
 
     function renderExtensionCheckboxes() {
         const extensionContainer = document.getElementById('extensionFilters');
-        extensionContainer.innerHTML = ''; // Clear existing checkboxes
+        extensionContainer.innerHTML = 'Select all by extension: '; // Clear existing checkboxes and add label
 
-        const uniqueExtensions = [...new Set(filesData.map(file => getFileExtension(file.path)))].sort();
+        const uniqueExtensions = [...new Set(filesData.map(file => getFileExtension(file.path)))]
+            .filter(ext => ext.length <= 4)
+            .sort();
         uniqueExtensions.forEach(ext => {
             const label = document.createElement('label');
             const checkbox = document.createElement('input');

@@ -1,9 +1,9 @@
-"""
-github_integration.py - GitHub API integration for GitIQ
-"""
+"""github_integration.py - GitHub API integration for GitIQ"""
 import os
 import json
+import time
 import logging
+import threading
 from github import Github
 from github.GithubException import GithubException
 
@@ -52,3 +52,52 @@ def create_github_pr(pr_title, branch_name, pr_description, base_branch):
     except Exception as e:
         logger.error(f"Unexpected error creating GitHub PR: {str(e)}")
         raise
+
+def process_pr_comments():
+    """Start a background thread to process PR comments"""
+    def comment_processor():
+        github_config = load_github_config()
+        if not github_config.get('enabled', False):
+            logger.warning("GitHub integration not enabled, skipping PR comment processing")
+            return
+
+        access_token = os.getenv(github_config.get('access_token'))
+        repo_owner = github_config.get('repo_owner')
+        repo_name = github_config.get('repo_name')
+
+        if not all([access_token, repo_owner, repo_name]):
+            logger.error("Missing required GitHub configuration")
+            return
+
+        g = Github(access_token)
+        repo = g.get_repo(f"{repo_owner}/{repo_name}")
+
+        while True:
+            try:
+                # Get all open PRs
+                open_prs = repo.get_pulls(state='open')
+                
+                for pr in open_prs:
+                    # Get comments that mention @GitIQ
+                    comments = pr.get_issue_comments()
+                    for comment in comments:
+                        if '@GitIQ' in comment.body and not comment.body.startswith('GitIQ:'):
+                            try:
+                                # Process the comment and generate a response
+                                response = "GitIQ: I'll help with that. This feature is coming soon!"
+                                pr.create_issue_comment(response)
+                                logger.info(f"Responded to comment in PR #{pr.number}")
+                            except Exception as e:
+                                logger.error(f"Error processing comment in PR #{pr.number}: {str(e)}")
+
+                # Sleep for a while before checking again
+                time.sleep(60)  # Check every minute
+
+            except Exception as e:
+                logger.error(f"Error in PR comment processor: {str(e)}")
+                time.sleep(300)  # On error, wait 5 minutes before retrying
+
+    # Start the comment processor in a background thread
+    thread = threading.Thread(target=comment_processor, daemon=True)
+    thread.start()
+    logger.info("Started PR comment processor thread")

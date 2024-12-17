@@ -1,6 +1,4 @@
-"""
-app.py - Main Flask application for GitIQ
-"""
+"""app.py - Main Flask application for GitIQ"""
 import os
 import json
 import time
@@ -11,7 +9,7 @@ from git import Repo, InvalidGitRepositoryError, Actor
 
 from llm_integration import load_llm_config, list_models, count_tokens
 from stream_events import StreamProcessor
-from github_integration import create_github_pr
+from github_integration import create_github_pr, process_pr_comments
 
 def setup_logging():
     handler = logging.StreamHandler()
@@ -40,6 +38,10 @@ with open('config.json') as f:
 
 # Load LLM configuration
 load_llm_config('config.json')
+
+# Start PR comment processing if GitHub is enabled
+if GITHUB_ENABLED:
+    process_pr_comments()
 
 def get_repo_status():
     """Get Git repository status information"""

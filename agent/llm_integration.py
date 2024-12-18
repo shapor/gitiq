@@ -109,6 +109,13 @@ def chat_completion(
     api_config = _llm_apis[model['llm_api']]
     api_type = api_config.get('api_type', 'openai')
 
+    # Handle models that don't support system messages
+    if model.get('nosystem', False):
+        messages = [{
+            "role": "user" if msg["role"] == "system" else msg["role"],
+            "content": msg["content"]
+        } for msg in messages]
+
     if api_type == 'openai':
         _ensure_openai_configured(api_config['api_base'], os.getenv(api_config['api_key']))
         try:

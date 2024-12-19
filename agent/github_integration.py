@@ -4,7 +4,7 @@ import json
 import time
 import logging
 import threading
-from github import Github
+from github import Github, PullRequest, IssueComment, PullRequestReviewComment
 from github.GithubException import GithubException
 
 logger = logging.getLogger(__name__)
@@ -78,17 +78,41 @@ def process_pr_comments():
                 open_prs = repo.get_pulls(state='open')
                 
                 for pr in open_prs:
-                    # Get comments that mention @GitIQ
-                    comments = pr.get_issue_comments()
-                    for comment in comments:
+                    # Get issue comments that mention @GitIQ
+                    issue_comments = pr.get_issue_comments()
+                    for comment in issue_comments:
+                        if not isinstance(comment, IssueComment):
+                            continue
+                        if not hasattr(comment, 'body'):
+                            logger.warning(f"Comment ID {comment.id} does not have a body.")
+                            continue
+                        logger.info(f"Processing issue comment ID {comment.id}: {comment.body}")
                         if '@GitIQ' in comment.body and not comment.body.startswith('GitIQ:'):
                             try:
                                 # Process the comment and generate a response
                                 response = "GitIQ: I'll help with that. This feature is coming soon!"
                                 pr.create_issue_comment(response)
-                                logger.info(f"Responded to comment in PR #{pr.number}")
+                                logger.info(f"Responded to issue comment in PR #{pr.number} with ID {comment.id}")
                             except Exception as e:
-                                logger.error(f"Error processing comment in PR #{pr.number}: {str(e)}")
+                                logger.error(f"Error processing issue comment in PR #{pr.number}: {str(e)}")
+
+                    # Get review comments that mention @GitIQ
+                    review_comments = pr.get_review_comments()
+                    for review_comment in review_comments:
+                        if not isinstance(review_comment, PullRequestReviewComment):
+                            continue
+                        if not hasattr(review_comment, 'body'):
+                            logger.warning(f"Review comment ID {review_comment.id} does not have a body.")
+                            continue
+                        logger.info(f"Processing review comment ID {review_comment.id}: {review_comment.body}")
+                        if '@GitIQ' in review_comment.body and not review_comment.body.startswith('GitIQ:'):
+                            try:
+                                # Process the review comment and generate a response
+                                response = "GitIQ: I'll assist with that change. Updating the code accordingly."
+                                pr.create_issue_comment(response)
+                                logger.info(f"Responded to review comment in PR #{pr.number} with ID {review_comment.id}")
+                            except Exception as e:
+                                logger.error(f"Error processing review comment in PR #{pr.number}: {str(e)}")
 
                 # Sleep for a while before checking again
                 time.sleep(60)  # Check every minute

@@ -202,14 +202,25 @@ The `models` section defines available models and their specific configurations:
       "llm_api": "openai",
       "name": "gpt-4-turbo",
       "cost": [0.01, 0.03],
-      "max_output_tokens": 4096
+      "max_output_tokens": 4096,
+      "temperature": 0.1
     },
     "Claude 3.5 Sonnet": {
       "llm_api": "claude",
       "name": "claude-3-5-sonnet",
       "nojson": true,
       "max_output_tokens": 8192,
-      "cost": [0.003, 0.015]
+      "cost": [0.003, 0.015],
+      "temperature": 0.1
+    },
+    "OpenAI o1-preview": {
+      "llm_api": "openai",
+      "name": "o1-preview",
+      "max_output_tokens": 32768,
+      "cost": [0.015, 0.06],
+      "nosystem": true,
+      "max_tokens_parameter": "max_completion_tokens",
+      "temperature": 1.0
     }
   }
 }
@@ -223,3 +234,4 @@ Model configuration options:
 - `nojson`: Set to true if model doesn't support JSON mode
 - `nosystem`: Set to true if model doesn't support system messages
 - `max_tokens_parameter`: Override parameter name for max tokens (e.g., "max_completion_tokens" for o1 models)
+- `temperature`: Temperature setting for model responses (e.g., 1.0 for o1 models that only support this value)

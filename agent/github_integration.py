@@ -4,8 +4,10 @@ import json
 import time
 import logging
 import threading
-from github import Github, PullRequest, IssueComment, PullRequestComment
+from github import Github, PullRequest
 from github.GithubException import GithubException
+from github.IssueComment import IssueComment
+from github.PullRequestComment import PullRequestComment
 
 logger = logging.getLogger(__name__)
 
@@ -87,7 +89,7 @@ def process_pr_comments():
                             logger.warning(f"Comment ID {comment.id} does not have a body.")
                             continue
                         logger.info(f"Processing issue comment ID {comment.id}: {comment.body}")
-                        if '@GitIQ' in comment.body and not comment.body.startswith('GitIQ:'):
+                        if '@gitiq-bot' in comment.body and not comment.body.startswith('GitIQ:'):
                             try:
                                 # Process the comment and generate a response
                                 response = "GitIQ: I'll help with that. This feature is coming soon!"
@@ -105,7 +107,7 @@ def process_pr_comments():
                             logger.warning(f"Review comment ID {review_comment.id} does not have a body.")
                             continue
                         logger.info(f"Processing review comment ID {review_comment.id}: {review_comment.body}")
-                        if '@GitIQ' in review_comment.body and not review_comment.body.startswith('GitIQ:'):
+                        if '@gitiq-bot' in review_comment.body and not review_comment.body.startswith('GitIQ:'):
                             try:
                                 # Process the review comment and generate a response
                                 response = "GitIQ: I'll assist with that change. Updating the code accordingly."

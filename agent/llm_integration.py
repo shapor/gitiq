@@ -1,6 +1,4 @@
-"""
-llm_integration.py - Simple LLM integration supporting multiple providers
-"""
+"""llm_integration.py - Simple LLM integration supporting multiple providers"""
 import os
 import re
 import json
@@ -119,14 +117,17 @@ def chat_completion(
     if api_type == 'openai':
         _ensure_openai_configured(api_config['api_base'], os.getenv(api_config['api_key']))
         try:
+            # Use custom max_tokens parameter name if specified in model config
+            max_tokens_param = model.get('max_tokens_parameter', 'max_tokens')
+            api_kwargs = kwargs.copy()
+            api_kwargs[max_tokens_param] = max_output_tokens
             response = openai.ChatCompletion.create(
                 model=model['name'],
                 messages=messages,
-                max_tokens=max_output_tokens,
                 n=1,
                 stop=None,
                 temperature=0.1,
-                **kwargs
+                **api_kwargs
             )
             llm_output = response['choices'][0]['message']['content'].strip()
         except (KeyError, IndexError) as e:

@@ -3,6 +3,7 @@
 ## Endpoints
 
 ### Get Repository Status
+
 ```
 GET /api/repo/status
 ```
@@ -18,6 +19,7 @@ Returns the repository's Git configuration status.
 ```
 
 ### Get File Structure
+
 ```
 GET /api/files
 ```
@@ -73,6 +75,7 @@ The `diff` field contains:
 - `null` for unmodified, untracked, or binary files
 
 ### Create PR with Status Stream
+
 ```
 POST /api/pr/create/stream
 ```
@@ -166,72 +169,3 @@ Creates a new change in a local branch or a GitHub Pull Request and streams stat
       "message": "Failed to generate changes: API error"
   }
   ```
-
-## Configuration
-
-### LLM APIs Configuration
-The `llm_apis` section in config.json defines the available LLM API endpoints and their authentication:
-
-```json
-{
-  "llm_apis": {
-    "openai": {
-      "api_base": "https://api.openai.com/v1",
-      "api_key": "OPENAI_API_KEY"
-    },
-    "claude": {
-      "api_type": "anthropic",
-      "api_key": "ANTHROPIC_API_KEY"
-    }
-  }
-}
-```
-
-Each API configuration can include:
-- `api_base`: Base URL for the API endpoint
-- `api_key`: Environment variable name containing the API key
-- `api_type`: Special handler for non-OpenAI compatible APIs (e.g., "anthropic")
-
-### Models Configuration
-The `models` section defines available models and their specific configurations:
-
-```json
-{
-  "models": {
-    "GPT-4 Turbo": {
-      "llm_api": "openai",
-      "name": "gpt-4-turbo",
-      "cost": [0.01, 0.03],
-      "max_output_tokens": 4096,
-      "temperature": 0.1
-    },
-    "Claude 3.5 Sonnet": {
-      "llm_api": "claude",
-      "name": "claude-3-5-sonnet",
-      "nojson": true,
-      "max_output_tokens": 8192,
-      "cost": [0.003, 0.015],
-      "temperature": 0.1
-    },
-    "OpenAI o1-preview": {
-      "llm_api": "openai",
-      "name": "o1-preview",
-      "max_output_tokens": 32768,
-      "cost": [0.015, 0.06],
-      "nosystem": true,
-      "max_tokens_parameter": "max_completion_tokens",
-      "temperature": 1.0
-    }
-  }
-}
-```
-
-Model configuration options:
-- `llm_api`: References which API configuration to use from `llm_apis`
-- `name`: Model identifier used in API calls
-- `cost`: Array of [prompt_cost, completion_cost] per 1000 tokens
-- `max_output_tokens`: Maximum completion length
-- `nojson`: Set to true if model doesn't support JSON mode
-- `nosystem`: Set to true if model doesn't support system messages
-- `max_tokens_parameter`: Override parameter name for max tokens (e.g., "max_completion_tokens" for o1 models)
-- `temperature`: Temperature setting for model responses (e.g., 1.0 for o1 models that only support this value)

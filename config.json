@@ -1,5 +1,4 @@
 {
-  "_cost_units": "$ per 1000 tokens",
   "git": {
     "name": "GitIQ Bot",
     "email": "gitiq-bot@gmail.com"
@@ -25,9 +24,11 @@
     "Claude 3.5 Sonnet": { "llm_api": "claude", "name": "claude-3-5-sonnet-20240620", "nojson": true, "max_output_tokens": 8192, "cost": [0.003, 0.015] },
     "OpenAI o1-preview (via OpenRouter)": { "llm_api": "openrouter", "name": "openai/o1-preview", "max_output_tokens": 32768, "cost": [0.015, 0.06], "nojson": true, "nosystem": true, "max_tokens_parameter": "max_completion_tokens", "temperature": 1.0 },
     "OpenAI o1-mini (via OpenRouter)": { "llm_api": "openrouter", "name": "openai/o1-mini", "max_output_tokens": 65536, "cost": [0.003, 0.012], "nojson": true, "nosystem": true, "max_tokens_parameter": "max_completion_tokens", "temperature": 1.0 },
+    "OpenAI o1-mini": { "llm_api": "openai", "name": "o1-mini", "max_output_tokens": 65536, "cost": [0.003, 0.012], "nojson": true, "nosystem": true, "max_tokens_parameter": "max_completion_tokens", "temperature": 1.0 },
+    "OpenAI o1 (via OpenRouter)": { "llm_api": "openrouter", "name": "openai/o1", "max_output_tokens": 100000, "cost": [0.015, 0.06], "max_tokens_parameter": "max_completion_tokens" },
+    "OpenAI o1-preview": { "llm_api": "openai", "name": "o1-preview-2024-09-12", "cost": [0.015, 0.06], "max_output_tokens": 32768, "nojson": true, "nosystem": true, "max_tokens_parameter": "max_completion_tokens", "temperature": 1.0 },
     "GPT-4o (with cache)": { "llm_api": "lmproxy", "name": "gpt-4o", "cost": [0.0025, 0.01], "max_output_tokens": 16384 },
     "GPT-4o": { "llm_api": "openai", "name": "gpt-4o", "cost": [0.0025, 0.01], "max_output_tokens": 16384 },
-    "o1-preview": { "llm_api": "openai", "name": "o1-preview-2024-09-12", "cost": [0.015, 0.06], "max_output_tokens": 32768, "nojson": true, "nosystem": true, "max_tokens_parameter": "max_completion_tokens", "temperature": 1.0 },
     "GPT-4o Mini (with cache)": { "llm_api": "lmproxy", "name": "gpt-4o-mini", "cost": [0.00015, 0.0006], "max_output_tokens": 8192 },
     "GPT-4o Mini": { "llm_api": "openai", "name": "gpt-4o-mini", "cost": [0.00015, 0.0006], "max_output_tokens": 8192 },
     "GPT-4 Turbo (with cache)": { "llm_api": "lmproxy", "name": "gpt-4-turbo", "cost": [0.01, 0.03], "max_output_tokens": 4096 },
@@ -35,12 +36,18 @@
     "GPT-3.5 Turbo (with cache)": { "llm_api": "lmproxy", "name": "gpt-3.5-turbo-0125", "cost": [0.0015, 0.002], "max_output_tokens": 4000 },
     "GPT-3.5 Turbo": { "llm_api": "openai", "name": "gpt-3.5-turbo", "cost": [0.0015, 0.002], "max_output_tokens": 4000 },
     "Llama 3 70B (8K)": { "llm_api": "groq", "name": "llama3-70b-8192", "cost": [0.00059, 0.00079], "nojson": true, "max_output_tokens": 8192 },
+    "Llama 3.3 70B (128K)": { "llm_api": "groq", "name": "llama-3.3-70b-versatile", "cost": [0.00059, 0.00079], "nojson": true, "max_output_tokens": 8192 },
     "Reflection 70B (via Hyperbolic)": { "llm_api": "hyperbolic", "name": "mattshumer/Reflection-Llama-3.1-70B", "nojson": true, "max_output_tokens": 8192 },
+    "Gemini 2.0 Flash (via Vertex)": { "llm_api": "vertex", "name": "gemini-2.0-flash-exp", "max_output_tokens": 8192, "cost": [0, 0] },
+    "Gemini 2.0 Flash (via Gemini)": { "llm_api": "gemini", "name": "gemini-2.0-flash-exp", "max_output_tokens": 8192, "cost": [0, 0] },
+    "Gemini 2.0 Flash (via OpenRouter)": { "llm_api": "openrouter", "name": "google/gemini-2.0-flash-exp:free", "max_output_tokens": 8192, "cost": [0, 0] },
     "Gemini 1.5 Pro (0827) (via OpenRouter)": { "llm_api": "openrouter", "name": "google/gemini-pro-1.5-exp", "max_output_tokens": 32000, "cost": [0.0025, 0.0075] },
     "Gemini 1.5 Flash Experimental (via OpenRouter)": { "llm_api": "openrouter", "name": "google/gemini-flash-1.5-exp", "nojson": true, "max_output_tokens": 8192, "cost": [0.000075, 0.0003] },
+    "Gemini 1.5 Flash (via Gemini)": { "llm_api": "gemini", "name": "gemini-1.5-flash", "max_output_tokens": 8192, "cost": [0, 0] },
     "Gemini 1.5 Flash (via OpenRouter)": { "llm_api": "openrouter", "name": "google/gemini-flash-1.5", "nojson": true, "max_output_tokens": 8192, "cost": [0.000075, 0.0003] },
     "Qwen2 72b (via Together)": { "llm_api": "together", "name": "Qwen/Qwen2-72B-Instruct", "nojson": true, "max_output_tokens": 8192 },
     "Qwen2.5 72b (via OpenRouter)": { "llm_api": "openrouter", "name": "qwen/qwen2.5-72b-instruct", "max_output_tokens": 16000 },
     "DBRX 132B Instruct (via OpenRouter)": { "llm_api": "openrouter", "name": "databricks/dbrx-instruct", "nojson": true, "max_output_tokens": 8192 }
-  }
+  },
+  "_cost_units": "$ per 1000 tokens"
 }

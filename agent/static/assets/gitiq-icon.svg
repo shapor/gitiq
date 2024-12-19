@@ -1,26 +1,26 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 40">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 100">
   <!-- IQ Text -->
-  <text x="35" y="25" 
+  <text x="65" y="45" 
         font-family="Arial, sans-serif" 
         font-weight="bold" 
-        font-size="20" 
+        font-size="40" 
         fill="#24292E">IQ</text>
   
   <!-- Continuous Horizontal Branch Line -->
-  <path d="M45 30 L85 30"
+  <path d="M80 60 L120 60"
         fill="none"
         stroke="#24292E"
-        stroke-width="3"
+        stroke-width="5"
         stroke-linecap="round"/>
   
   <!-- Q tail line tipped further down/left -->
-  <path d="M71 23 L85 30" 
+  <path d="M106 46 L120 60" 
         fill="none" 
         stroke="#24292E"
-        stroke-width="3"
+        stroke-width="5"
         stroke-linecap="round"/>
   
   <!-- Branch Nodes -->
-  <circle cx="45" cy="30" r="6" fill="#24292E"/>
-  <circle cx="85" cy="30" r="6" fill="#2563EB"/>
+  <circle cx="80" cy="60" r="12" fill="#24292E"/>
+  <circle cx="120" cy="60" r="12" fill="#2563EB"/>
 </svg>

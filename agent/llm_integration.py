@@ -102,6 +102,7 @@ def chat_completion(
         logger.error(f"Model {model_name} not found in configuration")
         raise ValueError(f"Model {model_name} not found.")
     max_output_tokens = model.get('max_output_tokens', 4000)
+    temperature = model.get('temperature', 0.1)
     if not model.get('nojson', False) and json_output:
         kwargs['response_format'] = {"type": "json_object"}
     api_config = _llm_apis[model['llm_api']]
@@ -121,12 +122,12 @@ def chat_completion(
             max_tokens_param = model.get('max_tokens_parameter', 'max_tokens')
             api_kwargs = kwargs.copy()
             api_kwargs[max_tokens_param] = max_output_tokens
+            api_kwargs['temperature'] = temperature
             response = openai.ChatCompletion.create(
                 model=model['name'],
                 messages=messages,
                 n=1,
                 stop=None,
-                temperature=0.1,
                 **api_kwargs
             )
             llm_output = response['choices'][0]['message']['content'].strip()
@@ -154,7 +155,7 @@ def chat_completion(
             system=system_message,
             messages=user_messages,
             max_tokens=max_output_tokens,
-            temperature=0.1,
+            temperature=temperature,
             **kwargs
         )
         llm_output = response.content[0].text

@@ -6,7 +6,7 @@
   "github": {
     "enabled": true,
     "access_token": "GITHUB_ACCESS_TOKEN",
-    "repo_owner": "edmundmae",
+    "repo_owner": "shapor",
     "repo_name": "gitiq"
   },
   "llm_apis": {

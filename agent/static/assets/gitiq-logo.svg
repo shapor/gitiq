@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 40">
+  <!-- GitIQ Text -->
+  <text x="20" y="25" 
+        font-family="Arial, sans-serif" 
+        font-weight="bold" 
+        font-size="20" 
+        fill="#24292E">GitIQ</text>
+  
+  <!-- Continuous Horizontal Branch Line -->
+  <path d="M20 30 L140 30"
+        fill="none"
+        stroke="#24292E"
+        stroke-width="3"
+        stroke-linecap="round"/>
+  
+  <!-- Q tail line tipped further down/left -->
+  <path d="M126 23 L140 30" 
+        fill="none" 
+        stroke="#24292E"
+        stroke-width="3"
+        stroke-linecap="round"/>
+  
+  <!-- Branch Nodes -->
+  <circle cx="100" cy="30" r="6" fill="#24292E"/>
+  <circle cx="140" cy="30" r="6" fill="#2563EB"/>
+</svg>

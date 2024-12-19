@@ -4,7 +4,7 @@ import json
 import time
 import logging
 import threading
-from github import Github, PullRequest, IssueComment, PullRequestReviewComment
+from github import Github, PullRequest, IssueComment, PullRequestComment
 from github.GithubException import GithubException
 
 logger = logging.getLogger(__name__)
@@ -99,7 +99,7 @@ def process_pr_comments():
                     # Get review comments that mention @GitIQ
                     review_comments = pr.get_review_comments()
                     for review_comment in review_comments:
-                        if not isinstance(review_comment, PullRequestReviewComment):
+                        if not isinstance(review_comment, PullRequestComment):
                             continue
                         if not hasattr(review_comment, 'body'):
                             logger.warning(f"Review comment ID {review_comment.id} does not have a body.")

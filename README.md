@@ -6,7 +6,7 @@ GitIQ is an AI-powered pair programming tool that leverages Git as the primary i
 
 [![GitIQ Demo](https://img.youtube.com/vi/9YhMlo8qr2c/0.jpg)](https://www.youtube.com/watch?v=9YhMlo8qr2c)
 
-*Winner of the [Berkeley RDI LLM Agents Hackathon](https://rdi.berkeley.edu/llm-agents-hackathon/) - December 2024*
+*Submitted to the [Berkeley RDI LLM Agents Hackathon](https://rdi.berkeley.edu/llm-agents-hackathon/) - December 2024*
 
 ## Table of Contents
 

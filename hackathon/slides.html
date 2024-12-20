@@ -6,6 +6,7 @@
     <title>GitIQ Presentation</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/reset.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/reveal.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.css">
     <style>
         :root {
             --gitiq-dark: #24292E;
@@ -174,6 +175,13 @@
             font-family: 'JetBrains Mono', monospace;
             font-size: 0.9em;
             margin: 1em 0;
+        }
+
+        .mermaid {
+            background: white;
+            padding: 2em;
+            border-radius: 1em;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         }
     </style>
 </head>
@@ -408,12 +416,163 @@
                     <p>🎥 Demo: demo.gitiq.dev</p>
                 </div>
             </section>
+
+            <!-- Appendix: Architecture Diagrams -->
+            <section>
+                <h2>Appendix: Agent Architecture</h2>
+                <div class="mermaid">
+                    flowchart TB
+                    subgraph UserInterface["User Interface Layer"]
+                        UI["Web UI"]
+                        StreamClient["Stream Client"]
+                    end
+
+                    subgraph Orchestration["Orchestration Layer"]
+                        StreamProcessor["Stream Processing Agent"]
+                        EventBus["Event Bus"]
+                    end
+
+                    subgraph LLMAgents["LLM Agents"]
+                        CodeGen["Code Generation Agent\n- Analyzes files\n- Generates changes\n- Creates new files"]
+                        PRGen["PR Generation Agent\n- Creates branch names\n- Writes PR descriptions\n- Generates commit msgs"]
+                        CommentAgent["Comment Processing Agent\n- Processes @mentions\n- Generates responses\n- Handles change requests"]
+                    end
+
+                    subgraph GitAgents["Git Agents"]
+                        LocalGit["Local Git Agent\n- Manages branches\n- Stages changes\n- Creates commits"]
+                        GitHubAgent["GitHub Agent\n- Creates PRs\n- Pushes branches\n- Manages comments"]
+                        PollAgent["PR Polling Agent\n- Monitors open PRs\n- Detects new comments\n- Triggers responses"]
+                    end
+
+                    subgraph ExternalAPIs["External APIs"]
+                        LLMProvider["LLM Provider\n(OpenAI/Anthropic)"]
+                        GitHubAPI["GitHub API"]
+                        Git["Local Git\nRepository"]
+                    end
+
+                    UI --> StreamClient
+                    StreamClient --> StreamProcessor
+                    StreamProcessor --> EventBus
+                    EventBus --> CodeGen & PRGen & CommentAgent
+                    EventBus --> LocalGit & GitHubAgent
+                    CodeGen & PRGen & CommentAgent --> LLMProvider
+                    LocalGit --> Git
+                    GitHubAgent --> GitHubAPI
+                    PollAgent --> GitHubAPI
+                    PollAgent --> EventBus
+                    CodeGen --> PRGen
+                    CommentAgent --> CodeGen
+                    GitHubAgent --> PollAgent
+
+                    classDef interface fill:#ffffff,stroke:#24292E
+                    classDef orchestration fill:#f8fafc,stroke:#24292E
+                    classDef llmagents fill:#f1f5f9,stroke:#24292E
+                    classDef gitagents fill:#e2e8f0,stroke:#24292E
+                    classDef external fill:#2563EB,stroke:#24292E,color:#ffffff
+
+                    class UI,StreamClient interface
+                    class StreamProcessor,EventBus orchestration
+                    class CodeGen,PRGen,CommentAgent llmagents
+                    class LocalGit,GitHubAgent,PollAgent gitagents
+                    class LLMProvider,GitHubAPI,Git external
+                </div>
+            </section>
+
+            <section>
+                <h2>Appendix: Backend Flow</h2>
+                <div class="mermaid">
+                    sequenceDiagram
+                    participant U as User/Browser
+                    participant A as Flask API
+                    participant SP as Stream Processor
+                    participant L as LLM Client
+                    participant G as Git Ops
+                    participant GH as GitHub API
+                    participant GHP as GitHub Poller
+
+                    U->>A: POST /api/pr/create/stream
+                    activate A
+                    A->>SP: Initialize Stream
+                    activate SP
+                    
+                    SP->>G: Read Selected Files
+                    G-->>SP: File Contents
+                    
+                    SP->>L: Generate Changes (prompt + files)
+                    L-->>SP: Generated Code Changes
+                    SP->>L: Generate Branch/PR Metadata
+                    L-->>SP: Branch Name, PR Title, Description
+                    
+                    SP->>G: Create Branch
+                    G-->>SP: Branch Created
+                    SP->>G: Write File Changes
+                    G-->>SP: Changes Written
+                    SP->>G: Commit Changes
+                    G-->>SP: Changes Committed
+                    SP->>G: Push Branch
+                    G-->>SP: Branch Pushed
+                    
+                    SP->>GH: Create Pull Request
+                    GH-->>SP: PR Created
+                    SP-->>A: Stream Complete
+                    deactivate SP
+                    A-->>U: SSE Complete
+                    deactivate A
+
+                    rect rgb(241, 245, 249)
+                        Note over GHP: Background Thread
+                        loop Every 60 seconds
+                            GHP->>GH: Get Open PRs
+                            GH-->>GHP: Open PRs List
+                            
+                            loop Each PR
+                                GHP->>GH: Get New Comments
+                                GH-->>GHP: PR Comments
+                                
+                                opt Has @gitiq-bot mention
+                                    GHP->>L: Process Comment Prompt
+                                    L-->>GHP: Generated Response
+                                    GHP->>GH: Post Response Comment
+                                    GH-->>GHP: Comment Posted
+                                end
+                            end
+                        end
+                    end
+
+                    rect rgb(226, 232, 240)
+                        Note over SP: Stream Events Flow
+                        SP->>U: Stage: read_files
+                        SP->>U: Stage: generate_changes
+                        SP->>U: Stage: generate_metadata
+                        SP->>U: Stage: create_branch
+                        SP->>U: Stage: apply_changes
+                        SP->>U: Stage: commit_changes
+                        SP->>U: Stage: push_changes
+                        SP->>U: Stage: create_pr
+                        SP->>U: Complete
+                    end
+
+                    rect rgb(37, 99, 235)
+                        Note over L: LLM Prompts
+                        Note over L: 1. Code Generation
+                        Note over L: 2. Branch/PR Naming
+                        Note over L: 3. PR Description
+                        Note over L: 4. Comment Responses
+                    end
+                </div>
+            </section>
         </div>
     </div>
 
-    <!-- Include Reveal.js from CDN -->
+    <!-- Include Reveal.js and Mermaid from CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/reveal.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
     <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose'
+        });
         Reveal.initialize({
             hash: true,
             slideNumber: true,
@@ -422,4 +581,3 @@
     </script>
 </body>
 </html>
-

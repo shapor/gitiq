@@ -1,0 +1,62 @@
+flowchart TB
+    subgraph UserInterface["User Interface Layer"]
+        UI["Web UI"]
+        StreamClient["Stream Client"]
+    end
+
+    subgraph Orchestration["Orchestration Layer"]
+        StreamProcessor["Stream Processing Agent"]
+        EventBus["Event Bus"]
+    end
+
+    subgraph LLMAgents["LLM Agents"]
+        CodeGen["Code Generation Agent\n- Analyzes files\n- Generates changes\n- Creates new files"]
+        PRGen["PR Generation Agent\n- Creates branch names\n- Writes PR descriptions\n- Generates commit msgs"]
+        CommentAgent["Comment Processing Agent\n- Processes @mentions\n- Generates responses\n- Handles change requests"]
+    end
+
+    subgraph GitAgents["Git Agents"]
+        LocalGit["Local Git Agent\n- Manages branches\n- Stages changes\n- Creates commits"]
+        GitHubAgent["GitHub Agent\n- Creates PRs\n- Pushes branches\n- Manages comments"]
+        PollAgent["PR Polling Agent\n- Monitors open PRs\n- Detects new comments\n- Triggers responses"]
+    end
+
+    subgraph ExternalAPIs["External APIs"]
+        LLMProvider["LLM Provider\n(OpenAI/Anthropic)"]
+        GitHubAPI["GitHub API"]
+        Git["Local Git\nRepository"]
+    end
+
+    %% Connections between layers
+    UI --> StreamClient
+    StreamClient --> StreamProcessor
+    StreamProcessor --> EventBus
+    EventBus --> CodeGen & PRGen & CommentAgent
+    EventBus --> LocalGit & GitHubAgent
+    
+    %% LLM Agent connections
+    CodeGen & PRGen & CommentAgent --> LLMProvider
+    
+    %% Git Agent connections
+    LocalGit --> Git
+    GitHubAgent --> GitHubAPI
+    PollAgent --> GitHubAPI
+    PollAgent --> EventBus
+    
+    %% Agent collaborations
+    CodeGen --> PRGen
+    CommentAgent --> CodeGen
+    GitHubAgent --> PollAgent
+    
+    %% Add styles matching logo colors
+    classDef interface fill:#ffffff,stroke:#24292E
+    classDef orchestration fill:#f8fafc,stroke:#24292E
+    classDef llmagents fill:#f1f5f9,stroke:#24292E
+    classDef gitagents fill:#e2e8f0,stroke:#24292E
+    classDef external fill:#2563EB,stroke:#24292E,color:#ffffff
+    
+    class UI,StreamClient interface
+    class StreamProcessor,EventBus orchestration
+    class CodeGen,PRGen,CommentAgent llmagents
+    class LocalGit,GitHubAgent,PollAgent gitagents
+    class LLMProvider,GitHubAPI,Git external

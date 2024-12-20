@@ -1,12 +1,14 @@
 # GitIQ
 
-GitIQ is an AI-powered pair programming tool that leverages Git as the primary interface, enabling seamless collaboration without the need for embedding in an IDE. With GitIQ, developers can describe changes in natural language and receive complete code modifications, enhancing productivity and simplifying the development workflow.
+## Start Here: Hackathon Submission
 
-## Demo Video
+View our [Hackathon Presentation](hackathon/slides.html) for a complete overview of GitIQ and its innovative approach to AI pair programming.
 
 [![GitIQ Demo](https://img.youtube.com/vi/9YhMlo8qr2c/0.jpg)](https://www.youtube.com/watch?v=9YhMlo8qr2c)
 
 *Submitted to the [Berkeley RDI LLM Agents Hackathon](https://rdi.berkeley.edu/llm-agents-hackathon/) - December 2024*
+
+GitIQ is an AI-powered pair programming tool that leverages Git as the primary interface, enabling seamless collaboration without the need for embedding in an IDE. With GitIQ, developers can describe changes in natural language and receive complete code modifications, enhancing productivity and simplifying the development workflow.
 
 ## Table of Contents
 

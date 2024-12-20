@@ -2,6 +2,12 @@
 
 GitIQ is an AI-powered pair programming tool that leverages Git as the primary interface, enabling seamless collaboration without the need for embedding in an IDE. With GitIQ, developers can describe changes in natural language and receive complete code modifications, enhancing productivity and simplifying the development workflow.
 
+## Demo Video
+
+[![GitIQ Demo](https://img.youtube.com/vi/9YhMlo8qr2c/0.jpg)](https://www.youtube.com/watch?v=9YhMlo8qr2c)
+
+*Submitted to the [Berkeley RDI LLM Agents Hackathon](https://rdi.berkeley.edu/llm-agents-hackathon/) - December 2024*
+
 ## Table of Contents
 
 - [Features](#features)
@@ -151,10 +157,11 @@ Once the application is running, you can start using GitIQ to assist with your c
 
 For more detailed information, please refer to the following documents:
 
-- [Product Requirements Document](PRD.md): Detailed requirements and specifications.
-- [API Specification](API.md): Information about the API endpoints and usage.
-- [Style Guide](Style_Guide.md): Guidelines for contributing to the project.
-- [PR Comments Feature Requirements](PR_Comments_Feature_Requirements.md)
+- [User Guide](UserGuide.md): Comprehensive guide for using GitIQ
+- [Product Requirements Document](PRD.md): Detailed requirements and specifications
+- [API Specification](API.md): Information about the API endpoints and usage
+- [Style Guide](Style_Guide.md): Guidelines for contributing to the project
+- [Hackathon Presentation](https://shapor.github.io/gitiq/hackathon/slides.html): Slides from the Berkeley RDI LLM Agents Hackathon
 
 ## Contributing
 

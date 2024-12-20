@@ -161,8 +161,7 @@ For more detailed information, please refer to the following documents:
 - [Product Requirements Document](PRD.md): Detailed requirements and specifications
 - [API Specification](API.md): Information about the API endpoints and usage
 - [Style Guide](Style_Guide.md): Guidelines for contributing to the project
-- [PR Comments Feature Requirements](PR_Comments_Feature_Requirements.md)
-- [Hackathon Presentation](hackathon/slides.html): Slides from the Berkeley RDI LLM Agents Hackathon
+- [Hackathon Presentation](https://shapor.github.io/gitiq/hackathon/slides.html): Slides from the Berkeley RDI LLM Agents Hackathon
 
 ## Contributing
 

@@ -13,7 +13,11 @@
             --gitiq-gray: #6B7280;
             --gitiq-light: #F3F4F6;
         }
-
+        .favicon {
+            width: 16px;
+            height: 16px;
+            vertical-align: middle;
+        }
         .reveal {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
         }
@@ -43,6 +47,10 @@
             text-align: center;
         }
 
+        .team-member a {
+            text-decoration: none;
+        }
+
         .team-member {
             display: grid;
             grid-template-columns: auto 1fr;
@@ -54,7 +62,7 @@
             border-radius: 1em;
         }
 
-        .team-member img {
+        .team-member img.profile-pic {
             width: 150px;
             height: 150px;
             border-radius: 50%;
@@ -184,7 +192,7 @@
                     </svg>
                 </div>
                 <h2>AI Pair Programming Through Git</h2>
-                <p>Reimagining developer collaboration</p>
+                <p>LLM Agents Hackathon - December 2024</p>
             </section>
 
             <!-- Abstract -->
@@ -203,12 +211,25 @@
             <section>
                 <h2>The Team</h2>
                 <div class="team-member">
-                    <img src="https://shapor.com/img/shapor-headshot-smile.jpg" alt="Shapor Naghibzadeh">
+                    <img class="profile-pic" src="https://shapor.com/img/shapor-headshot-smile.jpg" alt="Shapor Naghibzadeh">
                     <div>
                         <h3>Shapor Naghibzadeh</h3>
-                        <p>Google, Co-founder Chronicle (now GCP SecOps)</p>
-                        <p>Contact: shapor@gmail.com</p>
-                        <p>Social: @shapor everywhere</p>
+                        <p>Google, Co-founder Chronicle &amp; AI Lead</p>
+            <a href="https://shapor.com">
+                https://shapor.com
+            </a> &nbsp; · &nbsp;
+            <a href="https://github.com/shapor">
+                <img class="favicon" src="https://github.com/favicon.ico" alt="Github"> shapor
+            </a> &nbsp; · &nbsp;
+            <a href="https://linkedin.com/in/shapor">
+                <img class="favicon" src="https://linkedin.com/favicon.ico" alt="Linkedin"> shapor
+            </a> &nbsp; · &nbsp;
+            <a href="mailto:shapor@gmail.com">
+                <img class="favicon" src="https://ssl.gstatic.com/ui/v1/icons/mail/rfr/gmail.ico" alt="Gmail"> shapor
+            </a> &nbsp; · &nbsp;
+            <a href="https://x.com/shapor">
+                <img class="favicon" src="https://x.com/favicon.ico" alt="X (Twitter)"> @shapor
+            </a>
                         <p><span class="highlight">1,407</span> lines added, <span class="highlight">68</span> lines deleted</p>
                     </div>
                 </div>
@@ -294,6 +315,18 @@
                     <div class="step-number">5</div>
                     <p>PR created with comprehensive documentation</p>
                 </div>
+                <div class="workflow-step">
+                    <div class="step-number">6</div>
+                    <p>Human reviews and comments on proposed change</p>
+                </div>
+                <div class="workflow-step">
+                    <div class="step-number">7</div>
+                    <p>GitIQ proposes amends PR with additional commits</p>
+                </div>
+                <div class="workflow-step">
+                    <div class="step-number">8</div>
+                    <p>Human approves merge</p>
+                </div>
             </section>
 
             <!-- Architecture -->
@@ -307,6 +340,7 @@
                     <div class="tech-item">LLM integration for code generation</div>
                     <div class="tech-item">Local filesystem monitoring</div>
                     <div class="tech-item">Streaming status updates</div>
+                    <div class="tech-item">State completely lives in git/Github PRs</div>
                 </div>
                 <div style="margin-top: 2em;">
                     <p class="highlight">Zero-dependency philosophy:</p>

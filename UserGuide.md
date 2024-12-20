@@ -106,8 +106,13 @@ You should see the GitIQ interface:
    - You can also add context files that won't be modified but provide additional information
 
 2. **Choose Change Type**
-   - **Local Branch**: Creates changes in a local git branch
-   - **GitHub PR**: Creates a Pull Request on GitHub
+   - Use the toggle switch in the top section to select your preferred change type:
+     - **Local Branch** (toggle left): Changes will be created in a new local git branch only
+     - **GitHub PR** (toggle right): Changes will be pushed and a Pull Request will be created
+   
+   When you select GitHub PR and submit your changes, you'll see a success message with a direct link to the created PR:
+   
+   ![PR Creation Success](assets/ui-complete.png)
 
 3. **Select Model**
    - Choose from available LLM models in the dropdown

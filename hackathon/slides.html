@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>GitIQ Presentation</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/reset.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/reveal.min.css">
+    <style>
+        :root {
+            --gitiq-dark: #24292E;
+            --gitiq-blue: #2563EB;
+            --gitiq-gray: #6B7280;
+            --gitiq-light: #F3F4F6;
+        }
+
+        .reveal {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+
+        .reveal h1, .reveal h2, .reveal h3 {
+            font-weight: 700;
+            color: var(--gitiq-dark);
+            letter-spacing: -0.025em;
+        }
+
+        .reveal h1 { font-size: 3.5em; }
+        .reveal h2 { font-size: 2.5em; }
+        .reveal h3 { font-size: 1.8em; }
+
+        .reveal p, .reveal li {
+            color: var(--gitiq-gray);
+            font-size: 1.4em;
+            line-height: 1.6;
+        }
+
+        .reveal section {
+            text-align: left;
+        }
+
+        .logo-container {
+            margin-bottom: 2em;
+            text-align: center;
+        }
+
+        .team-member {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 2em;
+            align-items: center;
+            margin-bottom: 2em;
+            padding: 2em;
+            background: var(--gitiq-light);
+            border-radius: 1em;
+        }
+
+        .team-member img {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .problem-card {
+            background: white;
+            padding: 2em;
+            margin: 1em 0;
+            border-radius: 1em;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .workflow-step {
+            display: flex;
+            align-items: center;
+            gap: 1em;
+            margin: 1em 0;
+        }
+
+        .step-number {
+            background: var(--gitiq-blue);
+            color: white;
+            width: 2em;
+            height: 2em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            font-weight: bold;
+        }
+
+        .benefit-card {
+            background: linear-gradient(135deg, var(--gitiq-dark), var(--gitiq-blue));
+            color: white;
+            padding: 2em;
+            margin: 1em 0;
+            border-radius: 1em;
+        }
+
+        .benefit-card h3 {
+            color: white !important;
+        }
+
+        .benefit-card p {
+            color: rgba(255, 255, 255, 0.9) !important;
+        }
+
+        .code-block {
+            background: var(--gitiq-dark);
+            color: white;
+            padding: 1em;
+            border-radius: 0.5em;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8em;
+            line-height: 1.4;
+            margin: 1em 0;
+        }
+
+        .highlight {
+            color: var(--gitiq-blue);
+            font-weight: bold;
+        }
+
+        .approach-comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2em;
+            margin: 2em 0;
+        }
+
+        .feature-list {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        .feature-list li {
+            margin: 0.8em 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5em;
+        }
+
+        .feature-list li:before {
+            content: "→";
+            color: var(--gitiq-blue);
+            font-weight: bold;
+        }
+
+        .tech-stack {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1em;
+            margin: 2em 0;
+        }
+
+        .tech-item {
+            background: var(--gitiq-light);
+            padding: 1em;
+            border-radius: 0.5em;
+            text-align: center;
+        }
+
+        .commit-example {
+            background: var(--gitiq-light);
+            padding: 1.5em;
+            border-radius: 0.5em;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9em;
+            margin: 1em 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="reveal">
+        <div class="slides">
+            <!-- Title Slide -->
+            <section>
+                <div class="logo-container">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 100" width="400">
+                        <text x="40" y="45" font-family="Arial, sans-serif" font-weight="bold" font-size="40" fill="#24292E">GitIQ</text>
+                        <path d="M40 60 L160 60" fill="none" stroke="#24292E" stroke-width="5" stroke-linecap="round"/>
+                        <path d="M146 46 L160 60" fill="none" stroke="#24292E" stroke-width="5" stroke-linecap="round"/>
+                        <circle cx="120" cy="60" r="12" fill="#24292E"/>
+                        <circle cx="160" cy="60" r="12" fill="#2563EB"/>
+                    </svg>
+                </div>
+                <h2>AI Pair Programming Through Git</h2>
+                <p>Reimagining developer collaboration</p>
+            </section>
+
+            <!-- Abstract -->
+            <section>
+                <h2>Reimagining AI Pair Programming</h2>
+                <div class="problem-card">
+                    <p>Today's AI coding assistants force developers into cumbersome workflows that break established software engineering practices.</p>
+                </div>
+                <div class="benefit-card">
+                    <h3>Our Solution</h3>
+                    <p>GitIQ reimagines AI pair programming by using Git as the primary interface, operating as a lightweight agent that behaves like a real software engineering colleague.</p>
+                </div>
+            </section>
+
+            <!-- Team Slide -->
+            <section>
+                <h2>The Team</h2>
+                <div class="team-member">
+                    <img src="https://shapor.com/img/shapor-headshot-smile.jpg" alt="Shapor Naghibzadeh">
+                    <div>
+                        <h3>Shapor Naghibzadeh</h3>
+                        <p>Google, Co-founder Chronicle (now GCP SecOps)</p>
+                        <p>Contact: shapor@gmail.com</p>
+                        <p>Social: @shapor everywhere</p>
+                        <p><span class="highlight">1,407</span> lines added, <span class="highlight">68</span> lines deleted</p>
+                    </div>
+                </div>
+                <div class="team-member">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 100" width="150">
+                        <text x="65" y="45" font-family="Arial, sans-serif" font-weight="bold" font-size="40" fill="#24292E">IQ</text>
+                        <path d="M80 60 L120 60" fill="none" stroke="#24292E" stroke-width="5" stroke-linecap="round"/>
+                        <path d="M106 46 L120 60" fill="none" stroke="#24292E" stroke-width="5" stroke-linecap="round"/>
+                        <circle cx="80" cy="60" r="12" fill="#24292E"/>
+                        <circle cx="120" cy="60" r="12" fill="#2563EB"/>
+                    </svg>
+                    <div>
+                        <h3>GitIQ Bot</h3>
+                        <p>AI Pair Programming Assistant</p>
+                        <p>Contact: gitiq.bot@gmail.com</p>
+                        <p>GitHub: @gitiq-bot</p>
+                        <p><span class="highlight">4,375</span> lines added, <span class="highlight">2,541</span> lines deleted</p>
+                        <p><em>Fun fact: This team member wrote most of its own code!</em></p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Problem Statement Detail -->
+            <section>
+                <h2>The Problem</h2>
+                <div class="approach-comparison">
+                    <div class="problem-card">
+                        <h3>Chat-based Solutions</h3>
+                        <ul class="feature-list">
+                            <li>Constant context-switching between chat and IDE</li>
+                            <li>Manual copy-paste workflows</li>
+                            <li>No integration with development tools</li>
+                            <li>Incomplete responses with placeholders</li>
+                        </ul>
+                    </div>
+                    <div class="problem-card">
+                        <h3>IDE Integration</h3>
+                        <ul class="feature-list">
+                            <li>Better workflow integration</li>
+                            <li>Lacks code provenance tracking</li>
+                            <li>No preservation of AI-generated decisions</li>
+                            <li>Poor fit with team code review practices</li>
+                            <li>Unintended changes leak into codebase</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Our Approach -->
+            <section>
+                <h2>Our Approach</h2>
+                <p class="highlight">Instead of AI as a chat tool or IDE plugin, GitIQ introduces AI as a coworker</p>
+                <ul class="feature-list">
+                    <li>Uses Git as the primary interface - just like a real team member</li>
+                    <li>Creates complete Pull Requests with proper documentation</li>
+                    <li>Preserves context through commit messages and metadata</li>
+                    <li>Handles multi-file changes as coherent units</li>
+                    <li>Integrates naturally with existing review workflows</li>
+                    <li>Works with any editor/IDE since changes flow through Git</li>
+                </ul>
+            </section>
+
+            <!-- Workflow -->
+            <section>
+                <h2>How It Works</h2>
+                <div class="workflow-step">
+                    <div class="step-number">1</div>
+                    <p>Describe desired changes in natural language</p>
+                </div>
+                <div class="workflow-step">
+                    <div class="step-number">2</div>
+                    <p>GitIQ creates a semantically-named branch</p>
+                </div>
+                <div class="workflow-step">
+                    <div class="step-number">3</div>
+                    <p>AI makes changes across selected files</p>
+                </div>
+                <div class="workflow-step">
+                    <div class="step-number">4</div>
+                    <p>Changes committed with detailed messages</p>
+                </div>
+                <div class="workflow-step">
+                    <div class="step-number">5</div>
+                    <p>PR created with comprehensive documentation</p>
+                </div>
+            </section>
+
+            <!-- Architecture -->
+            <section>
+                <h2>Simple Architecture</h2>
+                <p>Focused on simplicity and standard tools</p>
+                <div class="tech-stack">
+                    <div class="tech-item">Pure Python with Flask backend</div>
+                    <div class="tech-item">Simple HTML/JavaScript frontend</div>
+                    <div class="tech-item">Git operations via GitPython</div>
+                    <div class="tech-item">LLM integration for code generation</div>
+                    <div class="tech-item">Local filesystem monitoring</div>
+                    <div class="tech-item">Streaming status updates</div>
+                </div>
+                <div style="margin-top: 2em;">
+                    <p class="highlight">Zero-dependency philosophy:</p>
+                    <ul class="feature-list">
+                        <li>No frameworks except Flask</li>
+                        <li>No build tools or preprocessors</li>
+                        <li>Standard library preferred</li>
+                        <li>Pure functions and simple data structures</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Commit Example -->
+            <section>
+                <h2>Example Commit</h2>
+                <div class="commit-example">
+                    <p>Implement JWT-based authentication system</p>
+                    <p>Model: gpt-4-turbo-preview</p>
+                    <p>Prompt: Update the user authentication to use JWT tokens instead of session cookies</p>
+                    <p>Description: Implemented JWT-based authentication system to replace session cookies, 
+                    enhancing security and enabling stateless authentication.</p>
+                    <p>Files modified:</p>
+                    <ul>
+                        <li>auth.py</li>
+                        <li>user_model.py</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Benefits -->
+            <section>
+                <h2>Key Benefits</h2>
+                <div class="benefit-card">
+                    <h3>Natural Integration</h3>
+                    <p>Operates like a real engineering colleague through familiar Git workflows</p>
+                </div>
+                <div class="benefit-card">
+                    <h3>Complete Changes</h3>
+                    <p>Generates full PRs instead of fragmentary code snippets</p>
+                </div>
+                <div class="benefit-card">
+                    <h3>Full Traceability</h3>
+                    <p>Every change tracked with its prompt and model metadata</p>
+                </div>
+            </section>
+
+            <!-- Looking Ahead -->
+            <section>
+                <h2>Looking Ahead</h2>
+                <ul class="feature-list">
+                    <li>Multi-modal input support (screenshots/screencapture)</li>
+                    <li>File-level streaming updates</li>
+                    <li>Enhanced PR comment-driven iterations</li>
+                    <li>Prompt history support in UI</li>
+                </ul>
+            </section>
+
+            <!-- Call to Action -->
+            <section>
+                <h2>Get Started</h2>
+                <p class="highlight" style="font-size: 2em;">Join us in reimagining AI pair programming</p>
+                <div style="margin-top: 2em;">
+                    <p>📁 GitHub: github.com/shapor/gitiq</p>
+                    <p>📚 Documentation: docs.gitiq.dev</p>
+                    <p>🎥 Demo: demo.gitiq.dev</p>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <!-- Include Reveal.js from CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/reveal.min.js"></script>
+    <script>
+        Reveal.initialize({
+            hash: true,
+            slideNumber: true,
+            navigationMode: 'default'
+        });
+    </script>
+</body>
+</html>
+
